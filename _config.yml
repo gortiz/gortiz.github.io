@@ -18,32 +18,104 @@
 # You can create any custom variable you would like, and they will be accessible
 # in the templates via {{ site.myvariable }}.
 
-title: Your awesome title
-email: your-email@example.com
+title: K is the new J
+#subtitle: "@gortizja's blog"
+name: Gonzalo Ortiz Jaureguizar
+#email: your-email@example.com
 description: >- # this means to ignore newlines until "baseurl:"
-  Write an awesome description for your new site here. You can edit this
-  line in _config.yml. It will appear in your document head meta (for
-  Google search results) and in your feed.xml site description.
+  Gonzalo's blog that mainly talks about programming, JVM, databases, etc
 baseurl: "" # the subpath of your site, e.g. /blog
 url: "" # the base hostname & protocol for your site, e.g. http://example.com
 twitter_username: gortizja
 github_username:  gortiz
+repository: "gortiz/gortiz.github.io"
+
+#TODO teaser: /assets/images/500x300.png
+#TODO logo: "/assets/images/88x88.png"
 
 # For jekyll-seo-tag
 twitter:
   username: gortizja
   card: summary
+social:
+  links:
+    - "https://twitter.com/gortizja"
+    - "https://www.linkedin.com/in/gortizja"
+author:
+  name: "Gonzalo Ortiz Jaureguizar"
+  avatar: "https://github.com/gortiz.png"
+  bio: >-
+    I like to design high efficiency, concurrency, distributed and 
+    secure systems​, usually in the JVM. I fell in love with Akka, 
+    Kotlin and recently, Rust.
+  location: "Madrid"
+  links:
+    - label: "Twitter"
+      icon: "fab fa-fw fa-twitter-square"
+      url: "https://twitter.com/gortizja"
+    - label: "GitHub"
+      icon: "fab fa-fw fa-github"
+      url: "https://github.com/gortiz"
+footer:
+  links:
+    - label: "Twitter"
+      icon: "fab fa-fw fa-twitter-square"
+      url: "https://twitter.com/gortizja"
+    - label: "GitHub"
+      icon: "fab fa-fw fa-github"
+      url: "https://github.com/gortiz"
+      
+main:
+  - title: "Quick-Start Guide"
+    url: /docs/quick-start-guide/
+  - title: "Posts"
+    url: /year-archive/
+  - title: "Categories"
+    url: /categories/
+  - title: "Tags"
+    url: /tags/
+  - title: "Pages"
+    url: /page-archive/
+  - title: "Collections"
+    url: /collection-archive/
+  - title: "External Link"
+    url: https://google.com
+
 
 # Build settings
-theme: minima
+#theme: minima
+remote_theme: "mmistakes/minimal-mistakes@4.17.2"
 plugins:
   - jekyll-feed
   - jekyll-sitemap
   - jekyll-mentions
   - jemoji
+#jekyll-include-cache is, at least, used by mmistakes/minimal-mistakes
+  - jekyll-include-cache
 
 jekyll-mentions:
   base_url: https://twitter.com
+
+paginate: 5 # amount of posts to show
+paginate_path: /page:num/
+
+defaults:
+  # _posts
+  - scope:
+      path: ""
+      type: posts
+    values:
+      layout: single
+      author_profile: true
+      read_time: true
+      comments: false
+      share: true
+      related: true
+      search: true
+
+search: true
+
+minimal_mistakes_skin: "dark" #"default", "air", "aqua", "contrast", "dark", "dirt", "neon", "mint", "plum" "sunrise"
 
 # Exclude from processing.
 # The following items will not be processed, by default.
