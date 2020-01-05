@@ -39,6 +39,10 @@ theme: minima
 plugins:
   - jekyll-feed
   - jekyll-sitemap
+  - jekyll-mentions
+
+jekyll-mentions:
+  base_url: https://twitter.com
 
 # Exclude from processing.
 # The following items will not be processed, by default.
