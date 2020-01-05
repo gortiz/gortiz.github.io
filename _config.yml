@@ -25,7 +25,7 @@ name: Gonzalo Ortiz Jaureguizar
 description: >- # this means to ignore newlines until "baseurl:"
   Gonzalo's blog that mainly talks about programming, JVM, databases, etc
 baseurl: "" # the subpath of your site, e.g. /blog
-url: "" # the base hostname & protocol for your site, e.g. http://example.com
+url: "https://gortiz.github.io" # the base hostname & protocol for your site, e.g. http://example.com
 twitter_username: gortizja
 github_username:  gortiz
 repository: "gortiz/gortiz.github.io"
