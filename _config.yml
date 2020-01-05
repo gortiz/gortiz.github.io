@@ -59,6 +59,12 @@ author:
     - label: "LinkedIn"
       icon: "fab fa-fw fa-linkedin"
       url: "https://www.linkedin.com/in/gortizja"
+    - label: "Slideshare"
+      icon: "fab fa-fw fa-slideshare"
+      url: "https://es.slideshare.net/GonzaloOrtizJauregui/presentations"
+    - label: "YouTube :es:"
+      icon: "fab fa-fw fa-youtube"
+      url: "https://www.youtube.com/playlist?list=PLE0Bd6fD0Oesg2K_96w3VxXgyAM_pxfYM"
 footer:
   links:
     - label: "Twitter"
@@ -70,6 +76,12 @@ footer:
     - label: "LinkedIn"
       icon: "fab fa-fw fa-linkedin"
       url: "https://www.linkedin.com/in/gortizja"
+    - label: "Slideshare"
+      icon: "fab fa-fw fa-slideshare"
+      url: "https://es.slideshare.net/GonzaloOrtizJauregui/presentations"
+    - label: "YouTube :es:"
+      icon: "fab fa-fw fa-youtube"
+      url: "https://www.youtube.com/playlist?list=PLE0Bd6fD0Oesg2K_96w3VxXgyAM_pxfYM"
 
 # Build settings
 #theme: minima
