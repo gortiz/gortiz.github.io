@@ -40,6 +40,7 @@ plugins:
   - jekyll-feed
   - jekyll-sitemap
   - jekyll-mentions
+  - jemoji
 
 jekyll-mentions:
   base_url: https://twitter.com
