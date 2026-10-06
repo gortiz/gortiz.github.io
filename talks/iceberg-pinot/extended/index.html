@@ -1281,6 +1281,160 @@ ${t}</tr>
   </figure>
 </section>
 
+<section class="layout-split">
+  <h2>Never mix two snapshots</h2>
+  <ul class="points">
+    <li>Compaction: 10 files become 1</li>
+    <li class="fragment" data-fragment-index="1">Mix before and after?</li>
+    <li class="fragment" data-fragment-index="2">Rows twice, or not at all</li>
+    <li class="fragment" data-fragment-index="3">Every read pins one snapshot</li>
+  </ul>
+  <figure class="diagram">
+<svg class="sketch" viewBox="0 0 640 520" role="img" aria-label="Compaction replaces ten small files by one; a query that reads both snapshots counts 140 rows instead of 100; pinning one snapshot fixes it">
+<text class="title muted" x="0" y="24">SNAPSHOT S1</text>
+<text class="title ice" x="0" y="154">SNAPSHOT S2 · after compaction</text>
+<rect x="0" y="42" width="56" height="56" data-tone="muted" data-fill="wash" data-stroke-width="1.6" />
+<text class="small muted center" x="28.0" y="70.0">10</text>
+<rect x="63" y="42" width="56" height="56" data-tone="muted" data-fill="wash" data-stroke-width="1.6" />
+<text class="small muted center" x="91.0" y="70.0">10</text>
+<rect x="126" y="42" width="56" height="56" data-tone="muted" data-fill="wash" data-stroke-width="1.6" />
+<text class="small muted center" x="154.0" y="70.0">10</text>
+<rect x="189" y="42" width="56" height="56" data-tone="muted" data-fill="wash" data-stroke-width="1.6" />
+<text class="small muted center" x="217.0" y="70.0">10</text>
+<rect x="252" y="42" width="56" height="56" data-tone="muted" data-fill="wash" data-stroke-width="1.6" />
+<text class="small muted center" x="280.0" y="70.0">10</text>
+<rect x="315" y="42" width="56" height="56" data-tone="muted" data-fill="wash" data-stroke-width="1.6" />
+<text class="small muted center" x="343.0" y="70.0">10</text>
+<rect x="378" y="42" width="56" height="56" data-tone="muted" data-fill="wash" data-stroke-width="1.6" />
+<text class="small muted center" x="406.0" y="70.0">10</text>
+<rect x="441" y="42" width="56" height="56" data-tone="muted" data-fill="wash" data-stroke-width="1.6" />
+<text class="small muted center" x="469.0" y="70.0">10</text>
+<rect x="504" y="42" width="56" height="56" data-tone="muted" data-fill="wash" data-stroke-width="1.6" />
+<text class="small muted center" x="532.0" y="70.0">10</text>
+<rect x="567" y="42" width="56" height="56" data-tone="muted" data-fill="wash" data-stroke-width="1.6" />
+<text class="small muted center" x="595.0" y="70.0">10</text>
+<rect x="0" y="172" width="400" height="60" data-tone="ice" data-fill="wash" data-stroke-width="1.6" />
+<text class="title ice center" x="200.0" y="202.0">100 rows</text>
+<g class="fragment " data-fragment-index="1">
+<rect x="450" y="262" width="180" height="50" data-tone="ink" data-fill="wash" data-stroke-width="1.6" />
+<text class="title center" x="540.0" y="287.0">query</text>
+<line class="arrow" x1="469" y1="100" x2="500" y2="258" data-tone="muted" data-stroke-width="1.3" data-head="12"/>
+<line class="arrow" x1="532" y1="100" x2="530" y2="258" data-tone="muted" data-stroke-width="1.3" data-head="12"/>
+<line class="arrow" x1="595" y1="100" x2="560" y2="258" data-tone="muted" data-stroke-width="1.3" data-head="12"/>
+<line class="arrow" x1="400" y1="210" x2="446" y2="280" data-tone="ice" data-stroke-width="1.6" data-head="12"/>
+</g>
+<g class="fragment " data-fragment-index="2">
+<rect x="290" y="360" width="340" height="60" data-tone="wine" data-fill="wash" data-stroke-width="1.6" />
+<text class="title wine center" x="460.0" y="379.0">count = 140</text>
+<text class="small center" x="460.0" y="403.0">S1 + S2 mixed: wrong</text>
+</g>
+<g class="fragment " data-fragment-index="3">
+<rect x="290" y="440" width="340" height="56" data-tone="ice" data-fill="wash" data-stroke-width="1.6" />
+<text class="small ice center" x="460.0" y="468.0">pin S2 → count = 100</text>
+<line x1="10" y1="48" x2="620" y2="92" data-tone="muted" data-stroke-width="2"/>
+<line x1="10" y1="92" x2="620" y2="48" data-tone="muted" data-stroke-width="2"/>
+</g>
+</svg>
+</figure>
+</section>
+
+<section class="layout-split">
+  <h2>Time travel</h2>
+  <ul class="points">
+    <li>Old trees stay reachable</li>
+    <li><code>FOR VERSION AS OF</code></li>
+    <li>Branches and tags</li>
+    <li class="fragment" data-fragment-index="1">Until snapshots expire</li>
+  </ul>
+  <figure class="diagram">
+<svg class="sketch" viewBox="0 0 640 520" role="img" aria-label="Time travel: the catalog points at v4 while v3 stays reachable through shared manifests, until snapshots are expired">
+<rect x="220" y="6" width="200" height="44" data-tone="wine" data-fill="wash" data-stroke-width="1.6" />
+<text class="small wine center" x="320.0" y="28.0">db.plays → v4</text>
+<line class="arrow" x1="320" y1="50" x2="460" y2="92" data-tone="wine" data-stroke-width="1.8" data-head="12"/>
+<rect x="380" y="96" width="180" height="50" data-tone="ice" data-fill="wash" data-stroke-width="1.6" />
+<text class="small ice center" x="470.0" y="121.0">v4 (current)</text>
+<rect x="80" y="96" width="180" height="50" data-tone="muted" data-fill="wash" data-stroke-width="1.6" />
+<text class="small muted center" x="170.0" y="121.0">v3</text>
+<line class="arrow" x1="470" y1="146" x2="470" y2="186" data-tone="ice" data-stroke-width="1.5" data-head="12"/>
+<line class="arrow" x1="170" y1="146" x2="170" y2="186" data-tone="muted" data-stroke-width="1.5" data-head="12"/>
+<rect x="380" y="190" width="180" height="50" data-tone="ice" data-fill="wash" data-stroke-width="1.6" />
+<text class="small ice center" x="470.0" y="215.0">snap-4</text>
+<rect x="80" y="190" width="180" height="50" data-tone="muted" data-fill="wash" data-stroke-width="1.6" />
+<text class="small muted center" x="170.0" y="215.0">snap-3</text>
+<rect x="60" y="300" width="140" height="50" data-tone="muted" data-fill="wash" data-stroke-width="1.6" />
+<text class="small muted center" x="130.0" y="325.0">man. A</text>
+<rect x="250" y="300" width="140" height="50" data-tone="muted" data-fill="wash" data-stroke-width="1.6" />
+<text class="small muted center" x="320.0" y="325.0">man. B</text>
+<rect x="440" y="300" width="140" height="50" data-tone="ice" data-fill="wash" data-stroke-width="1.6" />
+<text class="small ice center" x="510.0" y="325.0">man. C</text>
+<line class="arrow" x1="140" y1="240" x2="130" y2="296" data-tone="muted" data-stroke-width="1.5" data-head="12"/>
+<line class="arrow" x1="200" y1="240" x2="300" y2="296" data-tone="muted" data-stroke-width="1.5" data-head="12"/>
+<line class="arrow" x1="420" y1="240" x2="140" y2="296" data-tone="ice" data-stroke-width="1.5" data-head="12"/>
+<line class="arrow" x1="460" y1="240" x2="320" y2="296" data-tone="ice" data-stroke-width="1.5" data-head="12"/>
+<line class="arrow" x1="520" y1="240" x2="510" y2="296" data-tone="ice" data-stroke-width="1.5" data-head="12"/>
+<text class="small center" x="320" y="380">shared nodes: old snapshots cost almost nothing</text>
+<rect x="10" y="430" width="280" height="56" data-tone="muted" data-fill="wash" data-stroke-width="1.6" />
+<text class="small muted center" x="150.0" y="458.0">FOR VERSION AS OF 3</text>
+<path class="arrow" d="M 30 428 C -10 330 0 170 76 125" data-tone="muted" data-stroke-width="1.4"/>
+<g class="fragment " data-fragment-index="1">
+<line x1="80" y1="96" x2="260" y2="146" data-tone="wine" data-stroke-width="2.4"/>
+<line x1="80" y1="146" x2="260" y2="96" data-tone="wine" data-stroke-width="2.4"/>
+<text class="small wine" x="340" y="450">expire_snapshots: v3 gone</text>
+</g>
+</svg>
+</figure>
+</section>
+
+<section class="layout-split even">
+  <h2>Deletes: who pays?</h2>
+  <ul class="points">
+    <li><strong>Copy-on-write:</strong> writer rewrites files</li>
+    <li class="fragment" data-fragment-index="1"><strong>Merge-on-read:</strong> writer adds a delete file</li>
+    <li class="fragment" data-fragment-index="2">Reader merges at scan time</li>
+    <li class="fragment" data-fragment-index="3">Compaction folds them back</li>
+  </ul>
+  <figure class="diagram">
+<svg class="sketch" viewBox="0 0 546 520" role="img" aria-label="Copy-on-write rewrites the file at write time; merge-on-read adds a delete file that every reader merges; compaction folds deletes back into data">
+<text class="title muted" x="0" y="20">COPY-ON-WRITE</text>
+<rect x="0" y="36" width="180" height="60" data-tone="ink" data-fill="wash" data-stroke-width="1.6" />
+<text class="small center" x="90.0" y="55.0">file A</text>
+<text class="small center" x="90.0" y="79.0">1,000 rows</text>
+<line class="arrow" x1="184" y1="66" x2="266" y2="66" data-tone="ink" data-stroke-width="1.6" data-head="12"/>
+<text class="small center" x="225" y="50">rewrite</text>
+<rect x="270" y="36" width="180" height="60" data-tone="ink" data-fill="wash" data-stroke-width="1.6" />
+<text class="small center" x="360.0" y="55.0">file A'</text>
+<text class="small center" x="360.0" y="79.0">999 rows</text>
+<text class="small wine" x="462" y="66">writer pays</text>
+<g class="fragment " data-fragment-index="1">
+<text class="title muted" x="0" y="150">MERGE-ON-READ</text>
+<rect x="0" y="166" width="180" height="60" data-tone="ink" data-fill="wash" data-stroke-width="1.6" />
+<text class="small center" x="90.0" y="185.0">file A</text>
+<text class="small center" x="90.0" y="209.0">1,000 rows</text>
+<rect x="200" y="176" width="110" height="40" data-tone="amber" data-fill="wash" data-stroke-width="1.6" />
+<text class="small amber center" x="255.0" y="196.0">delete: row 42</text>
+</g>
+<g class="fragment " data-fragment-index="2">
+<line class="arrow" x1="90" y1="228" x2="220" y2="300" data-tone="ice" data-stroke-width="1.6" data-head="12"/>
+<line class="arrow" x1="255" y1="218" x2="240" y2="300" data-tone="ice" data-stroke-width="1.6" data-head="12"/>
+<rect x="160" y="304" width="160" height="56" data-tone="ice" data-fill="wash" data-stroke-width="1.6" />
+<text class="small ice center" x="240.0" y="321.0">reader</text>
+<text class="small center" x="240.0" y="345.0">merges</text>
+<text class="small wine" x="340" y="334">reader pays, every query</text>
+</g>
+<g class="fragment " data-fragment-index="3">
+<text class="title muted" x="0" y="410">COMPACTION</text>
+<rect x="0" y="426" width="180" height="60" data-tone="amber" data-fill="wash" data-stroke-width="1.6" />
+<text class="small amber center" x="90.0" y="456.0">A + deletes</text>
+<line class="arrow" x1="184" y1="456" x2="266" y2="456" data-tone="ink" data-stroke-width="1.6" data-head="12"/>
+<rect x="270" y="426" width="180" height="60" data-tone="ink" data-fill="wash" data-stroke-width="1.6" />
+<text class="small center" x="360.0" y="445.0">file A'</text>
+<text class="small center" x="360.0" y="469.0">999 rows</text>
+<text class="small ice" x="462" y="456">debt paid</text>
+</g>
+</svg>
+</figure>
+</section>
+
 <section class="layout-full">
   <h2>Planning a read</h2>
   <figure class="diagram">
@@ -1338,6 +1492,132 @@ ${t}</tr>
 </g>
 <g class="fragment" data-fragment-index="5">
 <text class="center" x="568" y="420">Each step reads only what the step before could not rule out</text>
+</g>
+</svg>
+</figure>
+</section>
+
+<section class="layout-split">
+  <h2>Merge-on-read, three ways</h2>
+  <div class="left-stack">
+  <ul class="points">
+    <li><strong>Position deletes</strong> <span class="pill">v2</span>: file + row</li>
+    <li class="fragment" data-fragment-index="1"><strong>Equality deletes</strong> <span class="pill">v2</span>: "where id = 42"</li>
+    <li class="fragment" data-fragment-index="2"><strong>Deletion vectors</strong> <span class="pill">v3</span>: one bitmap per file</li>
+  </ul>
+    <p class="footnote">Puffin: a blob file format from the Iceberg spec. It stores DVs and statistics.</p>
+  </div>
+  <figure class="diagram">
+<svg class="sketch" viewBox="0 0 640 520" role="img" aria-label="Three merge-on-read encodings: position deletes list file and row; equality deletes list values to match; deletion vectors store one bitmap per file in a Puffin file">
+<rect x="0" y="10" width="640" height="140" data-tone="amber" data-fill="none" data-stroke-width="1.6" />
+<text class="title amber" x="16" y="32">POSITION DELETES · v2</text>
+<text class="title muted" x="16" y="66">file                      pos</text>
+<text class="small" x="16" y="94">s3://…/data-0007.parquet    42</text>
+<text class="small" x="16" y="120">s3://…/data-0007.parquet    913</text>
+<text class="small amber" x="400" y="94">which row of which file</text>
+<g class="fragment " data-fragment-index="1">
+<rect x="0" y="174" width="640" height="140" data-tone="amber" data-fill="none" data-stroke-width="1.6" />
+<text class="title amber" x="16" y="196">EQUALITY DELETES · v2</text>
+<text class="small" x="16" y="238">user_id = 4217</text>
+<text class="small" x="16" y="266">track_id = 99</text>
+<text class="small amber" x="400" y="238">every row matching</text>
+<text class="small amber" x="400" y="266">→ join on every read</text>
+</g>
+<g class="fragment " data-fragment-index="2">
+<rect x="0" y="338" width="640" height="172" data-tone="ice" data-fill="none" data-stroke-width="1.6" />
+<text class="title ice" x="16" y="360">DELETION VECTORS · v3</text>
+<rect x="16" y="384" width="330" height="110" data-tone="ice" data-fill="wash" data-stroke-width="1.6" />
+<text class="title ice" x="30" y="404">PUFFIN FILE</text>
+<rect x="30" y="428" width="17" height="26" data-tone="muted" data-fill="none" data-stroke-width="1" />
+<text class="small muted center" x="38.5" y="441.0">0</text>
+<rect x="49" y="428" width="17" height="26" data-tone="muted" data-fill="none" data-stroke-width="1" />
+<text class="small muted center" x="57.5" y="441.0">0</text>
+<rect x="68" y="428" width="17" height="26" data-tone="muted" data-fill="none" data-stroke-width="1" />
+<text class="small muted center" x="76.5" y="441.0">0</text>
+<rect x="87" y="428" width="17" height="26" data-tone="wine" data-fill="wash" data-stroke-width="1" />
+<text class="small wine center" x="95.5" y="441.0">1</text>
+<rect x="106" y="428" width="17" height="26" data-tone="muted" data-fill="none" data-stroke-width="1" />
+<text class="small muted center" x="114.5" y="441.0">0</text>
+<rect x="125" y="428" width="17" height="26" data-tone="muted" data-fill="none" data-stroke-width="1" />
+<text class="small muted center" x="133.5" y="441.0">0</text>
+<rect x="144" y="428" width="17" height="26" data-tone="muted" data-fill="none" data-stroke-width="1" />
+<text class="small muted center" x="152.5" y="441.0">0</text>
+<rect x="163" y="428" width="17" height="26" data-tone="muted" data-fill="none" data-stroke-width="1" />
+<text class="small muted center" x="171.5" y="441.0">0</text>
+<rect x="182" y="428" width="17" height="26" data-tone="muted" data-fill="none" data-stroke-width="1" />
+<text class="small muted center" x="190.5" y="441.0">0</text>
+<rect x="201" y="428" width="17" height="26" data-tone="wine" data-fill="wash" data-stroke-width="1" />
+<text class="small wine center" x="209.5" y="441.0">1</text>
+<rect x="220" y="428" width="17" height="26" data-tone="muted" data-fill="none" data-stroke-width="1" />
+<text class="small muted center" x="228.5" y="441.0">0</text>
+<rect x="239" y="428" width="17" height="26" data-tone="muted" data-fill="none" data-stroke-width="1" />
+<text class="small muted center" x="247.5" y="441.0">0</text>
+<rect x="258" y="428" width="17" height="26" data-tone="muted" data-fill="none" data-stroke-width="1" />
+<text class="small muted center" x="266.5" y="441.0">0</text>
+<rect x="277" y="428" width="17" height="26" data-tone="wine" data-fill="wash" data-stroke-width="1" />
+<text class="small wine center" x="285.5" y="441.0">1</text>
+<rect x="296" y="428" width="17" height="26" data-tone="muted" data-fill="none" data-stroke-width="1" />
+<text class="small muted center" x="304.5" y="441.0">0</text>
+<rect x="315" y="428" width="17" height="26" data-tone="muted" data-fill="none" data-stroke-width="1" />
+<text class="small muted center" x="323.5" y="441.0">0</text>
+<text class="small" x="30" y="476">one roaring bitmap per data file</text>
+<text class="small ice" x="400" y="420">one bitmap AND</text>
+<text class="small ice" x="400" y="446">at most one per file</text>
+</g>
+</svg>
+</figure>
+</section>
+
+<section class="layout-split">
+  <h2>Hidden partitioning</h2>
+  <ul class="points">
+    <li>Partition by a transform</li>
+    <li><code>day(ts)</code>, <code>bucket(16, user_id)</code></li>
+    <li>Users filter on <code>ts</code></li>
+    <li class="fragment" data-fragment-index="1">Change the spec, keep old files</li>
+  </ul>
+  <figure class="diagram">
+<svg class="sketch" viewBox="0 0 640 520" role="img" aria-label="Hidden partitioning: a filter on ts prunes day partitions without the user naming them; a new spec partitions new files by hour while old files keep the old spec">
+<rect x="140" y="6" width="360" height="50" data-tone="ink" data-fill="wash" data-stroke-width="1.6" />
+<text class="small center" x="320.0" y="31.0">WHERE ts BETWEEN 09-29 AND 09-30</text>
+<line class="arrow" x1="320" y1="56" x2="320" y2="96" data-tone="ink" data-stroke-width="1.5" data-head="12"/>
+<text class="small ice" x="330" y="80">planner knows: day(ts)</text>
+<rect x="20" y="110" width="124" height="200" data-tone="muted" data-fill="none" data-stroke-width="1.6" />
+<text class="title muted center" x="82" y="130">day=09-28</text>
+<rect x="34" y="148" width="96" height="28" data-tone="muted" data-fill="none" data-stroke-width="1.1" />
+<rect x="34" y="186" width="96" height="28" data-tone="muted" data-fill="none" data-stroke-width="1.1" />
+<rect x="34" y="224" width="96" height="28" data-tone="muted" data-fill="none" data-stroke-width="1.1" />
+<rect x="34" y="262" width="96" height="28" data-tone="muted" data-fill="none" data-stroke-width="1.1" />
+<rect x="160" y="110" width="124" height="200" data-tone="ice" data-fill="wash" data-stroke-width="1.6" />
+<text class="title ice center" x="222" y="130">day=09-29</text>
+<rect x="174" y="148" width="96" height="28" data-tone="ice" data-fill="none" data-stroke-width="1.1" />
+<rect x="174" y="186" width="96" height="28" data-tone="ice" data-fill="none" data-stroke-width="1.1" />
+<rect x="174" y="224" width="96" height="28" data-tone="ice" data-fill="none" data-stroke-width="1.1" />
+<rect x="174" y="262" width="96" height="28" data-tone="ice" data-fill="none" data-stroke-width="1.1" />
+<rect x="300" y="110" width="124" height="200" data-tone="ice" data-fill="wash" data-stroke-width="1.6" />
+<text class="title ice center" x="362" y="130">day=09-30</text>
+<rect x="314" y="148" width="96" height="28" data-tone="ice" data-fill="none" data-stroke-width="1.1" />
+<rect x="314" y="186" width="96" height="28" data-tone="ice" data-fill="none" data-stroke-width="1.1" />
+<rect x="314" y="224" width="96" height="28" data-tone="ice" data-fill="none" data-stroke-width="1.1" />
+<rect x="314" y="262" width="96" height="28" data-tone="ice" data-fill="none" data-stroke-width="1.1" />
+<text class="title muted" x="20" y="340">SPEC 1 · day(ts)</text>
+<g class="fragment " data-fragment-index="1">
+<rect x="446" y="110" width="184" height="200" data-tone="wine" data-fill="none" data-stroke-width="1.6" />
+<text class="title wine center" x="538" y="130">10-01 · hour</text>
+<rect x="458" y="148" width="72" height="36" data-tone="wine" data-fill="wash" data-stroke-width="1.1" />
+<text class="small wine center" x="494.0" y="166.0">h=00</text>
+<rect x="542" y="148" width="72" height="36" data-tone="wine" data-fill="wash" data-stroke-width="1.1" />
+<text class="small wine center" x="578.0" y="166.0">h=01</text>
+<rect x="458" y="198" width="72" height="36" data-tone="wine" data-fill="wash" data-stroke-width="1.1" />
+<text class="small wine center" x="494.0" y="216.0">h=02</text>
+<rect x="542" y="198" width="72" height="36" data-tone="wine" data-fill="wash" data-stroke-width="1.1" />
+<text class="small wine center" x="578.0" y="216.0">h=03</text>
+<rect x="458" y="248" width="72" height="36" data-tone="wine" data-fill="wash" data-stroke-width="1.1" />
+<text class="small wine center" x="494.0" y="266.0">h=04</text>
+<rect x="542" y="248" width="72" height="36" data-tone="wine" data-fill="wash" data-stroke-width="1.1" />
+<text class="small wine center" x="578.0" y="266.0">h=05</text>
+<text class="title wine" x="450" y="340">SPEC 2 · hour(ts)</text>
+<text class="small center" x="320" y="400">old files keep spec 1, nothing is rewritten</text>
 </g>
 </svg>
 </figure>
