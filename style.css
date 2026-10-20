@@ -18,3 +18,6 @@ ul.talks li { border-top: 1px solid var(--rule); padding: 18px 0; }
 ul.talks .title { font-size: 21px; font-weight: 700; }
 ul.talks .meta { color: var(--muted); font-size: 15px; font-family: var(--mono); }
 ul.talks .links a { margin-right: 18px; }
+ul.talks details { margin: 6px 0; }
+ul.talks summary { cursor: pointer; color: var(--muted); font-size: 15px; font-family: var(--mono); }
+ul.talks details p { font-size: 16px; margin: 10px 0; }
