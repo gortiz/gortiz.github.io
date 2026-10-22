@@ -1,0 +1,46 @@
+{
+  "sessions": [
+    {
+      "id": 155840,
+      "title": "Rust en la JVM gracias a Panama",
+      "description": "La JVM es una obra de ingeniería que hace que Java (y otros lenguajes) sea increíblemente rápido para la mayoría de las cargas de trabajo. Pero a veces, \"rápido\" no es suficiente. En dominios como la computación científica, la IA o el procesamiento de volúmenes masivos de texto, necesitamos invocar bibliotecas nativas altamente optimizadas (escritas en C++ o Rust) para obtener una ventaja de rendimiento crítica o acceder a funcionalidades que no están disponibles en la JVM. Durante décadas, la única opción fue usar la Java Native Interface (JNI), un puente hacia el mundo nativo tan potente como complejo e inseguro.\r\n\r\nAquí es donde entra en juego Project Panama. Gracias a la Foreign Function & Memory API (FFM) incluida en Project Panama, Java finalmente ofrece una forma segura, elegante y con soporte oficial para llamar a código nativo, eliminando la necesidad de escribir código de interconexión  y de la gestión manual de memoria. En esta charla usaré FFM para solucionar un desafío clásico en Java: el motor de expresiones regulares.\r\n\r\nAcompáñame en una sesión práctica en la que reemplazaremos el motor de regex de Java, que es funcional pero a menudo ineficiente, por el crate de regex de Rust, altamente optimizado. Implementaremos la solución de dos formas, una al lado de la otra: \"a la antigua\" con JNI y \"a la moderna\" con Project Panama. Para rematar, compararemos el rendimiento de ambas soluciones frente a las expresiones regulares estándar de Java, lo cual servirá para entender no solo cómo invocar código nativo, sino también cuándo realmente merece la pena el esfuerzo y cuándo no.",
+      "languageCode": "es",
+      "sessionUrl": "https://sessionize.com/s/gortizja/rust-en-la-jvm-gracias-a-panama/155840"
+    },
+    {
+      "id": 155839,
+      "title": "Native Speed, Java Comfort: Calling Rust from the JVM with Project Panama",
+      "description": "The JVM is one of the most impressive pieces of software engineering, making Java incredibly fast for most workloads. But sometimes, \"fast\" isn't enough. For domains like scientific computing, AI, or processing massive volumes of text, we need to call highly-optimized native libraries written in C++ or Rust to gain a critical performance edge or access functionality not available on the JVM. For decades, this meant using the Java Native Interface (JNI)—a powerful but notoriously complex and unsafe bridge to the native world.\r\n\r\nEnter Project Panama. With the Foreign Function & Memory (FFM) API, Java finally has a safe, supported, and elegant way to call native code, eliminating the need for brittle glue code and manual memory management. This talk puts it to the test with a classic Java challenge: the regular expression engine.\r\n\r\nJoin me for a practical, hands-on session where we will replace Java's capable but often-outperformed regex engine with Rust's highly optimized regex crate. We will walk through two implementations side-by-side: the \"old way\" with JNI and the \"new way\" with Project Panama. You will see firsthand how Panama simplifies interfacing with native code and improves safety. We'll cap it off with live benchmarks to compare the performance of both approaches against standard Java regex, helping you understand not just how to call native code, but also when it's truly worth the effort.",
+      "languageCode": "en",
+      "sessionUrl": "https://sessionize.com/s/gortizja/native-speed-java-comfort-calling-rust-from-the-jv/155839"
+    },
+    {
+      "id": 130112,
+      "title": "Deep Dive into Apache Pinot’s Multi-Stage Query Engine: Architecture and Performance",
+      "description": "Apache Pinot is an open-source, real-time distributed database for low-latency, high-throughput queries on large-scale datasets. As industries like e-commerce and IoT demand real-time analytics, Pinot's original single-stage query engine (SSQE) struggled with complex queries involving joins and window functions.\r\n\r\nThe Multi-Stage Query Engine (MSQE) addresses these challenges, enabling advanced relational operators and supporting complex query execution. In this session, we’ll delve into MSQE’s key innovations, including its integration with Apache Calcite for smart query planning and gRPC for efficient inter-server communication. We’ll also explore strategies for optimizing data shuffling, thread management, and query execution statistics to scale across large environments.\r\n\r\nJoin us to discover how MSQE extends Pinot’s capabilities, overcomes its limitations, and transforms it into a robust solution for modern data analysis.",
+      "languageCode": "en",
+      "sessionUrl": "https://sessionize.com/s/gortizja/deep-dive-into-apache-pinots-multi-stage-query-eng/130112"
+    },
+    {
+      "id": 192633,
+      "title": "Teaching an LLM to Tune SQL Queries, and Not Trusting It",
+      "description": "Query optimization is expert work: read the plan, find the stage that hurts, and pick the rewrite, index or hint that fixes it. We turned that expertise into an LLM-based query advisor for Apache Pinot, a distributed real-time analytics database. It reads the query, the execution plan, the runtime statistics and the table configuration, and recommends what to change.\r\n\r\nThe model alone was not good enough, and this talk shows how we fixed that. We wrote down what a human expert checks as patterns the model applies. Deterministic gates reject advice that does not match the table. Each rewrite runs against the live cluster before a user sees it. An evaluation suite measures every prompt change. You will leave with a recipe for putting an LLM in front of a database without letting it hurt you when it is wrong.",
+      "languageCode": "en",
+      "sessionUrl": "https://sessionize.com/s/gortizja/teaching-an-llm-to-tune-sql-queries-and-not-trusti/192633"
+    },
+    {
+      "id": 191863,
+      "title": "The Whys and Hows of a Hybrid Rust+Java Distributed Query Engine",
+      "description": "Apache Pinot is a distributed real-time analytics database written in Java. Its multi-stage engine runs joins, aggregations and window functions over large intermediate results. In the JVM, query memory is hard to predict, hard to bound, and shared with the garbage collector. A single heavy query can put the whole server under pressure.\r\n\r\nWe wanted explicit control over query memory without rewriting the database. So we built a hybrid engine. Java keeps planning, coordination and data access. Stage execution moves to Apache DataFusion, a Rust query engine built on Apache Arrow, where memory is accounted for, limited and spilled to disk on our terms.\r\n\r\nThis talk explains why we made that choice and what it took to make it work. We cover how data crosses the boundary between the two runtimes, and who owns memory on each side. We also cover how cancellation and failures travel between Java and Rust, and how existing Java code keeps running while we migrate one operator at a time.\r\n\r\nYou will leave with a practical view of when a native engine inside a JVM service is worth its cost, and which problems to solve first if you decide to build one.",
+      "languageCode": "en",
+      "sessionUrl": "https://sessionize.com/s/gortizja/the-whys-and-hows-of-a-hybrid-rustjava-distributed/191863"
+    },
+    {
+      "id": 191859,
+      "title": "Your Iceberg Table Is Already a Pinot Table",
+      "description": "Apache Iceberg and Apache Pinot were built a decade apart for different reasons, yet both converged on the same idea: immutable columnar files plus metadata that decides which files a query reads.\r\n\r\nThis talk explains both from zero: how an Iceberg table is built and pruned, and where min/max statistics stop helping. Then how StarTree's Pinot maps each Parquet file to a segment and builds indexes beside it, so the data stays in your Iceberg table, with no copy.\r\n\r\nWe will see what changes when an inverted index points to exact rows instead of whole files, and when a star-tree answers aggregations without reading them, with comparisons against Trino and ClickHouse on the same data and hardware. And where it does not help: when no index applies, you still move the bytes. You cannot beat physics.",
+      "languageCode": "en",
+      "sessionUrl": "https://sessionize.com/s/gortizja/your-iceberg-table-is-already-a-pinot-table/191859"
+    }
+  ]
+}

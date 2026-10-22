@@ -1,0 +1,51 @@
+---
+import { SITE_TITLE, SITE_DESCRIPTION } from '../consts';
+import { feeds } from '../lib/feed';
+
+interface Props {
+  title?: string;
+  description?: string;
+  lang?: string;
+  type?: 'website' | 'article';
+  publishedTime?: Date;
+  nav?: boolean;
+}
+
+const { title, description = SITE_DESCRIPTION, lang = 'en', type = 'website', publishedTime, nav = true } = Astro.props;
+const fullTitle = title ? `${title} · ${SITE_TITLE}` : SITE_TITLE;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+---
+<!doctype html>
+<html lang={lang}>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{fullTitle}</title>
+  <meta name="description" content={description}>
+  <link rel="canonical" href={canonical}>
+  <link rel="stylesheet" href="/style.css">
+  {Object.entries(feeds).map(([feedLang, feed]) => (
+    <>
+      <link rel="alternate" type="application/rss+xml" title={`${feed.title} (RSS)`} href={feed.rss} hreflang={feedLang}>
+      <link rel="alternate" type="application/atom+xml" title={`${feed.title} (Atom)`} href={feed.atom} hreflang={feedLang}>
+    </>
+  ))}
+  <link rel="sitemap" href="/sitemap-index.xml">
+  <meta property="og:site_name" content={SITE_TITLE}>
+  <meta property="og:title" content={title ?? SITE_TITLE}>
+  <meta property="og:description" content={description}>
+  <meta property="og:type" content={type}>
+  <meta property="og:url" content={canonical}>
+  <meta property="og:locale" content={lang === 'es' ? 'es_ES' : 'en_GB'}>
+  {publishedTime && <meta property="article:published_time" content={publishedTime.toISOString()}>}
+  <meta name="twitter:card" content="summary">
+</head>
+<body>
+<main>
+  {nav && (
+    <nav class="site"><a href="/">Gonzalo Ortiz</a><a href="/blog/">Blog</a><a href="/talks/">Talks</a></nav>
+  )}
+  <slot />
+</main>
+</body>
+</html>

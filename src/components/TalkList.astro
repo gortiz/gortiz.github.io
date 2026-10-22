@@ -1,0 +1,26 @@
+---
+import Abstract from './Abstract.astro';
+import type { Talk } from '../data/talks';
+import { getPosts, postUrl, primaryPosts } from '../lib/posts';
+
+interface Props { talks: Talk[]; showYear?: boolean }
+
+const { talks, showYear = false } = Astro.props;
+const posts = primaryPosts(await getPosts());
+---
+<ul class="talks">
+  {talks.map((talk) => {
+    const related = posts.filter((p) => p.data.talk === talk.slug);
+    return (
+      <li>
+        <div class="title">{talk.title}</div>
+        <div class="meta">{[...talk.events, ...(showYear ? [talk.year] : [])].join(' · ')}</div>
+        <Abstract id={talk.sessionizeId} />
+        <div class="links">
+          {talk.links.map((l) => <a href={l.href}>{l.label}</a>)}
+          {related.map((p) => <a href={postUrl(p)}>Blog post</a>)}
+        </div>
+      </li>
+    );
+  })}
+</ul>

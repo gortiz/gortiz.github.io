@@ -1,0 +1,25 @@
+---
+import Base from '../layouts/Base.astro';
+import PostList from '../components/PostList.astro';
+import TalkList from '../components/TalkList.astro';
+import { talks } from '../data/talks';
+import { getPosts, primaryPosts } from '../lib/posts';
+import { SESSIONIZE_URL, GITHUB_URL } from '../consts';
+
+const posts = primaryPosts(await getPosts()).slice(0, 5);
+---
+<Base nav={false}>
+  <h1>Gonzalo Ortiz</h1>
+  <p class="lead">Apache Pinot PMC member. Staff Engineer at StarTree.</p>
+  <p class="lead"><a href="/blog/">Blog</a> · <a href="/talks/">All talks</a> · <a href={SESSIONIZE_URL}>Sessionize</a> · <a href={GITHUB_URL}>GitHub</a> · <a href="/rss.xml">RSS</a></p>
+
+  {posts.length > 0 && (
+    <>
+      <h2>Latest posts</h2>
+      <PostList posts={posts} />
+    </>
+  )}
+
+  <h2>Talks</h2>
+  <TalkList talks={talks} showYear />
+</Base>
