@@ -1,0 +1,48 @@
+:root {
+  --ground: #F7F8F8; --ink: #121A1D; --muted: #64767C; --rule: #D5DDDE; --accent: #0C6F79;
+  --font: "Helvetica Neue", Arial, sans-serif; --mono: ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --ground: #092653; --ink: #E6EEF5; --muted: #A3BFD8; --rule: #24406B; --accent: #55C3DB; }
+}
+:root[data-theme="dark"] { --ground: #092653; --ink: #E6EEF5; --muted: #A3BFD8; --rule: #24406B; --accent: #55C3DB; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--ground); color: var(--ink); font: 18px/1.55 var(--font); }
+main { max-width: 760px; margin: 0 auto; padding: 64px 16px 96px; }
+h1 { font-size: 44px; line-height: 1.1; letter-spacing: -0.02em; margin: 0 0 8px; }
+h2 { font-size: 15px; font-family: var(--mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin: 56px 0 16px; }
+p.lead { color: var(--muted); margin: 0; }
+a { color: var(--accent); }
+ul.talks { list-style: none; padding: 0; margin: 0; }
+ul.talks li { border-top: 1px solid var(--rule); padding: 18px 0; }
+ul.talks .title { font-size: 21px; font-weight: 700; }
+ul.talks .meta { color: var(--muted); font-size: 15px; font-family: var(--mono); }
+ul.talks .links a { margin-right: 18px; }
+ul.talks details { margin: 6px 0; }
+ul.talks summary { cursor: pointer; color: var(--muted); font-size: 15px; font-family: var(--mono); }
+ul.talks details p { font-size: 16px; margin: 10px 0; }
+nav.site { font-family: var(--mono); font-size: 15px; margin-bottom: 40px; }
+nav.site a { margin-right: 18px; text-decoration: none; }
+nav.site a:first-child { font-weight: 700; color: var(--ink); }
+ul.talks .title a { color: var(--ink); text-decoration: none; }
+ul.talks .title a:hover { text-decoration: underline; }
+ul.talks p.summary { margin: 6px 0 0; font-size: 16px; }
+.badge { display: inline-block; margin-left: 10px; padding: 0 6px; border: 1px solid var(--rule); border-radius: 4px; font-size: 12px; font-family: var(--mono); }
+article.post h1 { font-size: 38px; }
+article.post header .meta, article.post footer.meta { color: var(--muted); font-size: 15px; font-family: var(--mono); margin: 4px 0; }
+article.post footer.meta { border-top: 1px solid var(--rule); margin-top: 48px; padding-top: 12px; }
+nav.toc { margin: 24px 0; padding: 8px 16px; border-left: 3px solid var(--rule); }
+nav.toc summary { cursor: pointer; color: var(--muted); font-size: 15px; font-family: var(--mono); }
+nav.toc ul { list-style: none; padding: 0; margin: 8px 0; font-size: 16px; }
+nav.toc li.d3 { padding-left: 18px; }
+.prose h2 { font-size: 26px; font-family: var(--font); letter-spacing: normal; text-transform: none; color: var(--ink); margin: 40px 0 12px; }
+.prose h3 { font-size: 20px; margin: 28px 0 8px; }
+.prose a.anchor { margin-left: 8px; color: var(--rule); text-decoration: none; }
+.prose h2:hover a.anchor, .prose h3:hover a.anchor { color: var(--muted); }
+.prose :not(pre) > code { font-family: var(--mono); font-size: 0.88em; padding: 1px 4px; border-radius: 4px; background: color-mix(in srgb, var(--rule) 45%, transparent); }
+.prose .expressive-code { margin: 20px 0; }
+.prose img, .prose picture img { max-width: 100%; height: auto; }
+.prose picture, .prose p > img:only-child { display: block; margin: 24px auto; text-align: center; }
+.prose blockquote { margin: 20px 0; padding-left: 16px; border-left: 3px solid var(--accent); color: var(--muted); }
+.prose table { border-collapse: collapse; font-size: 16px; margin: 20px 0; display: block; overflow-x: auto; }
+.prose th, .prose td { border: 1px solid var(--rule); padding: 6px 10px; text-align: left; }

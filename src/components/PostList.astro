@@ -1,0 +1,21 @@
+---
+import { formatDate, getPosts, languageNames, postUrl, primaryPosts, strings, translationsOf, type Post } from '../lib/posts';
+
+interface Props { posts: Post[] }
+
+const all = await getPosts();
+---
+<ul class="talks posts">
+  {primaryPosts(Astro.props.posts).map((post) => (
+    <li lang={post.data.lang}>
+      <div class="title"><a href={postUrl(post)}>{post.data.title}</a></div>
+      <div class="meta">
+        <time datetime={post.data.pubDate.toISOString()}>{formatDate(post.data.pubDate, post.data.lang)}</time>
+        {post.data.lang !== 'en' && <span class="badge">{post.data.lang.toUpperCase()}</span>}
+        {post.data.draft && <span class="badge">{strings[post.data.lang].draft}</span>}
+        {translationsOf(post, all).map((tr) => <a class="badge" href={postUrl(tr)} hreflang={tr.data.lang} lang={tr.data.lang}>{languageNames[tr.data.lang]}</a>)}
+      </div>
+      <p class="summary">{post.data.description}</p>
+    </li>
+  ))}
+</ul>

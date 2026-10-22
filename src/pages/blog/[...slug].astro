@@ -1,0 +1,52 @@
+---
+import { render } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import { talks } from '../../data/talks';
+import { formatDate, getPosts, postUrl, readingMinutes, strings, translationsOf, type Post } from '../../lib/posts';
+
+export async function getStaticPaths() {
+  const posts = await getPosts();
+  return posts.map((post) => ({ params: { slug: post.id }, props: { post, posts } }));
+}
+
+interface Props { post: Post; posts: Post[] }
+
+const { post, posts } = Astro.props;
+const { data } = post;
+const t = strings[data.lang];
+const { Content, headings } = await render(post);
+const toc = headings.filter((h) => h.depth === 2 || h.depth === 3);
+const translations = translationsOf(post, posts);
+const talk = talks.find((x) => x.slug === data.talk);
+---
+<Base title={data.title} description={data.description} lang={data.lang} type="article" publishedTime={data.pubDate}>
+  <article class="post">
+    <header>
+      <h1>{data.title}</h1>
+      <p class="meta">
+        <time datetime={data.pubDate.toISOString()}>{formatDate(data.pubDate, data.lang)}</time>
+        {data.updatedDate && <> · {t.updated} <time datetime={data.updatedDate.toISOString()}>{formatDate(data.updatedDate, data.lang)}</time></>}
+        {' · '}{readingMinutes(post)} {t.minRead}
+        {data.draft && <span class="badge">{t.draft}</span>}
+      </p>
+      {translations.map((tr) => (
+        <p class="meta"><a href={postUrl(tr)} hreflang={tr.data.lang} lang={tr.data.lang}>{strings[tr.data.lang].readIn}</a></p>
+      ))}
+    </header>
+    {toc.length >= 3 && (
+      <nav class="toc">
+        <details open>
+          <summary>{t.contents}</summary>
+          <ul>{toc.map((h) => <li class={`d${h.depth}`}><a href={`#${h.slug}`}>{h.text.replace(/#$/, '')}</a></li>)}</ul>
+        </details>
+      </nav>
+    )}
+    <div class="prose"><Content /></div>
+    {(talk || data.tags.length > 0) && (
+      <footer class="meta">
+        {talk && <p>{t.relatedTalk}: <a href={talk.links[0].href}>{talk.title}</a></p>}
+        {data.tags.length > 0 && <p>{data.tags.map((tag) => `#${tag}`).join(' ')}</p>}
+      </footer>
+    )}
+  </article>
+</Base>

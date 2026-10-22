@@ -1,0 +1,18 @@
+---
+import sessionize from '../data/sessionize.json';
+
+interface Props { id: number }
+
+const session = sessionize.sessions.find((s) => s.id === Astro.props.id);
+const paragraphs = (session?.description ?? '')
+  .replace(/\r\n/g, '\n')
+  .split('\n\n')
+  .map((p) => p.trim())
+  .filter(Boolean);
+---
+{paragraphs.length > 0 && (
+  <details>
+    <summary>Abstract</summary>
+    {paragraphs.map((p) => <p>{p}</p>)}
+  </details>
+)}

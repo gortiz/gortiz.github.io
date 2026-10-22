@@ -1,0 +1,37 @@
+---
+import Base from '../../layouts/Base.astro';
+import TalkList from '../../components/TalkList.astro';
+import Abstract from '../../components/Abstract.astro';
+import { talks } from '../../data/talks';
+import sessionize from '../../data/sessionize.json';
+import { SESSIONIZE_URL } from '../../consts';
+
+const years = [...new Set(talks.map((t) => t.year))].sort((a, b) => b - a);
+// Sessionize sessions without slides here: everything not linked from src/data/talks.ts.
+const listed = new Set(talks.flatMap((t) => [t.sessionizeId, ...(t.alsoSessionizeIds ?? [])]));
+const more = sessionize.sessions.filter((s) => !listed.has(s.id));
+---
+<Base title="Talks">
+  <h1>Talks</h1>
+  <p class="lead"><a href={SESSIONIZE_URL}>Sessionize</a></p>
+  {years.map((year) => (
+    <>
+      <h2>{year}</h2>
+      <TalkList talks={talks.filter((t) => t.year === year)} />
+    </>
+  ))}
+  {more.length > 0 && (
+    <>
+      <h2>More talks</h2>
+      <ul class="talks">
+        {more.map((s) => (
+          <li>
+            <div class="title">{s.title}</div>
+            <Abstract id={s.id} />
+            <div class="links"><a href={s.sessionUrl}>Sessionize</a></div>
+          </li>
+        ))}
+      </ul>
+    </>
+  )}
+</Base>
