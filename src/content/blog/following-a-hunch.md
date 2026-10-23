@@ -19,7 +19,7 @@ So we will keep working the same, but producing and consuming more.
 The truth is that I do not really know where I stand in that wide spectrum.
 What I do experience every day is that AI makes my work much more productive.
 It lets me focus on what matters, and it solves problems in ways I could not have imagined.
-That is exactly what I want to talk about in this first post of this blog.
+That is exactly what I want to talk about in the first post of this blog.
 
 ## The crux of the matter
 

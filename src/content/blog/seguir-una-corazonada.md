@@ -20,9 +20,9 @@ lo mismo, pero produciendo y consumiendo más.
 
 La verdad es que, en este amplio espectro, no sé realmente dónde colocarme.
 Lo que sí que experimento cada día es que la IA hace mi trabajo mucho más productivo,
-permitiéndome centrarme en lo importante y solventando problemas de formas que no 
+permitiendo centrarme en lo importante y solventando problemas de formas que no 
 podría haber imaginado.
-Precisamente me gustaría hablar de eso en este primer post de este blog.
+Precisamente me gustaría hablar de eso en el primer post de este blog.
 
 ## El meollo
 
