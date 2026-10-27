@@ -2,7 +2,7 @@
 title: Seguir una corazonada ya sale barato
 description: Un benchmark de release mostró una mejora del 40% que nadie sabía explicar. Claude la investigó en otra máquina mientras yo seguía trabajando, y el encogimiento de hombros acabó en un fix de rendimiento.
 pubDate: 2026-10-23
-draft: true
+draft: false
 lang: es
 translationKey: following-a-hunch
 tags: [claude, pinot, java, performance, benchmarks]

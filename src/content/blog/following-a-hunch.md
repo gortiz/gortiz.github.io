@@ -2,7 +2,7 @@
 title: Following a hunch costs less now
 description: A release benchmark showed a 40% speedup that nobody could explain. Claude chased it down on a spare machine while I kept working, and the shrug turned into a performance fix.
 pubDate: 2026-10-23
-draft: true
+draft: false
 lang: en
 translationKey: following-a-hunch
 tags: [claude, pinot, java, performance, benchmarks]
