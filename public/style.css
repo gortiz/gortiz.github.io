@@ -44,5 +44,9 @@ nav.toc li.d3 { padding-left: 18px; }
 .prose img, .prose picture img { max-width: 100%; height: auto; }
 .prose picture, .prose p > img:only-child { display: block; margin: 24px auto; text-align: center; }
 .prose blockquote { margin: 20px 0; padding-left: 16px; border-left: 3px solid var(--accent); color: var(--muted); }
+.prose blockquote.callout { --tone: var(--accent); padding: 12px 16px; border-radius: 4px; border-left-color: var(--tone); color: var(--ink); background: color-mix(in srgb, var(--tone) 12%, var(--ground)); }
+.prose blockquote.callout-warning { --tone: #D4A017; }
+.prose blockquote.callout > :first-child { margin-top: 0; }
+.prose blockquote.callout > :last-child { margin-bottom: 0; }
 .prose table { border-collapse: collapse; font-size: 16px; margin: 20px 0; display: block; overflow-x: auto; }
 .prose th, .prose td { border: 1px solid var(--rule); padding: 6px 10px; text-align: left; }

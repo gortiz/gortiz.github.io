@@ -5,6 +5,7 @@ import sitemap from '@astrojs/sitemap';
 import { rehypeHeadingIds, unified } from '@astrojs/markdown-remark';
 import rehypeMermaid from 'rehype-mermaid';
 import rehypeAutolinkHeadings from 'rehype-autolink-headings';
+import rehypeCallouts from './src/lib/rehype-callouts.mjs';
 
 // Mermaid renders diagrams in a headless browser at build time.
 // CHROME_PATH points it at a local Chrome instead of the Playwright download.
@@ -29,6 +30,7 @@ export default defineConfig({
     processor: unified({
       rehypePlugins: [
         [rehypeMermaid, { strategy: 'img-svg', dark: true, launchOptions, mermaidConfig: { fontFamily: 'Helvetica Neue, Arial, sans-serif' } }],
+        rehypeCallouts,
         rehypeHeadingIds,
         [rehypeAutolinkHeadings, { behavior: 'append', properties: { className: ['anchor'], ariaHidden: 'true', tabIndex: -1 }, content: { type: 'text', value: '#' } }],
       ],
