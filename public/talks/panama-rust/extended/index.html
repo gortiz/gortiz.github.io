@@ -1,0 +1,1161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Native Speed, Java Comfort — Devoxx UK</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reset.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/theme/black.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/highlight/monokai.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<style>
+  :root {
+    --accent:  #e6a020;
+    --rust:    #dea584;
+    --java:    #5382a1;
+    --panama:  #4ec9b0;
+    --jni:     #c586c0;
+  }
+
+  .reveal { font-family: 'Source Sans Pro', 'Segoe UI', sans-serif; }
+  .reveal pre code { font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 0.78em; line-height: 1.45; }
+  .reveal h1, .reveal h2, .reveal h3 { color: var(--accent); text-transform: none; }
+  .reveal h1 { font-size: 2em; }
+  .reveal h2 { font-size: 1.5em; margin-top: 0; }
+
+  /* Language badges on code blocks — Rust 🦀 / Java ☕ / C .h */
+  .reveal pre { position: relative; }
+  .reveal pre:has(> code.language-rust) { border-left: 4px solid var(--rust); }
+  .reveal pre:has(> code.language-java) { border-left: 4px solid var(--java); }
+  .reveal pre:has(> code.language-c)    { border-left: 4px solid #6da4d8; }
+  .reveal pre:has(> code.language-rust)::before,
+  .reveal pre:has(> code.language-java)::before,
+  .reveal pre:has(> code.language-c)::before {
+    position: absolute;
+    top: 0.25em;
+    right: 0.5em;
+    line-height: 1;
+    padding: 0.15em 0.4em;
+    background: rgba(0,0,0,0.5);
+    border-radius: 4px;
+    z-index: 2;
+    pointer-events: none;
+  }
+  .reveal pre:has(> code.language-rust)::before { content: "🦀"; font-size: 1em; }
+  .reveal pre:has(> code.language-java)::before { content: "☕"; font-size: 1em; }
+  .reveal pre:has(> code.language-c)::before {
+    content: ".h";
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85em;
+    font-weight: bold;
+    color: #6da4d8;
+  }
+
+  .columns { display: flex; gap: 1.2em; align-items: flex-start; }
+  .columns > * { flex: 1; min-width: 0; }
+
+  .callout {
+    background: rgba(230,160,32,0.15);
+    border-left: 4px solid var(--accent);
+    padding: 0.5em 0.9em;
+    margin-top: 0.7em;
+    font-size: 0.85em;
+    border-radius: 0 4px 4px 0;
+  }
+
+  /* Danger styling — for slides showing problematic / dangerous code */
+  .danger-slide { box-shadow: inset 0 0 0 3px rgba(231,76,60,0.5); border-radius: 6px; padding: 1em 0.5em; }
+  .callout.danger-callout {
+    background: rgba(231,76,60,0.15);
+    border-left-color: #e74c3c;
+  }
+
+  .tag-jni   { color: var(--jni);   font-weight: bold; }
+  .tag-panama{ color: var(--panama); font-weight: bold; }
+  .tag-rust  { color: var(--rust);  font-weight: bold; }
+  .tag-java  { color: var(--java);  font-weight: bold; }
+
+  .section-divider { font-size: 3em; color: var(--accent); }
+
+  .diagram-box {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72em;
+    background: #1e1e1e;
+    border: 1px solid #444;
+    border-radius: 6px;
+    padding: 0.8em 1.2em;
+    text-align: left;
+    white-space: pre;
+    line-height: 1.5;
+    overflow: auto;
+  }
+
+  .slide-num {
+    display: none;
+  }
+
+  .reveal pre,
+  .reveal pre code,
+  .reveal .hljs { overflow: hidden !important; }
+
+  table { font-size: 0.8em; }
+  th { color: var(--accent); }
+
+  /* Mermaid diagrams (live and pre-rendered) */
+  .mermaid, .mermaid-static { display: flex; justify-content: center; }
+  .mermaid svg, .mermaid-static svg { max-height: 380px; }
+
+  /* Two-mermaid side-by-side compare (slide 14: problem → solution) */
+  .problem-solution {
+    display: flex;
+    align-items: center;
+    gap: 0.6em;
+    margin-top: 0.4em;
+  }
+  .problem-solution .ps-side { flex: 1; min-width: 0; }
+  .problem-solution .ps-side .mermaid svg,
+  .problem-solution .ps-side .mermaid-static svg { max-height: 440px; max-width: 100%; }
+  .problem-solution .ps-label { font-size: 0.65em; margin: 0 0 0.4em; text-align: center; font-weight: 600; }
+  .problem-solution .ps-arrow {
+    font-size: 2.6em;
+    color: var(--accent);
+    flex-shrink: 0;
+    line-height: 1;
+  }
+  /* Notes: opaque amber */
+  .mermaid g.note rect,
+  .mermaid rect.note,
+  .mermaid .note > rect { fill: #4a3a1f !important; fill-opacity: 1 !important; stroke: #e6a020 !important; }
+  .mermaid g.note text,
+  .mermaid text.noteText { fill: #ffe9b4 !important; }
+  /* Lifelines: subdued grey dashed */
+  .mermaid line.actor-line { stroke: #5a5a5a !important; stroke-width: 1px !important; stroke-dasharray: 4 4 !important; }
+
+  /* Excalidraw diagrams (white-paper card on dark slide) */
+  .excalidraw-diagram {
+    display: block;
+    margin: 0.4em auto;
+    max-height: 460px;
+    max-width: 90%;
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 6px 22px rgba(0,0,0,0.45);
+  }
+
+  .two-bridges-img {
+    display: block;
+    margin: 0.5em auto 0;
+    width: 90%;
+    height: auto;
+    max-height: 580px;
+    object-fit: contain;
+  }
+
+  /* Two-bridges layout (slide 3) */
+  .bridges {
+    display: grid;
+    grid-template-columns: 1fr 2fr 1fr;
+    align-items: center;
+    gap: 1em;
+    margin: 0.8em 0;
+  }
+  .bridge-side {
+    padding: 1.2em 0.8em;
+    border-radius: 12px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 1.1em;
+  }
+  .bridge-java { background: rgba(83,130,161,0.15); border: 2px solid var(--java); }
+  .bridge-rust { background: rgba(222,165,132,0.15); border: 2px solid var(--rust); }
+  .bridge-arrows {
+    display: flex;
+    flex-direction: column;
+    gap: 1.4em;
+    align-items: stretch;
+  }
+  .bridge-row {
+    position: relative;
+    height: 0.9em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-top: 3px solid var(--accent);
+    border-bottom: 3px solid var(--accent);
+  }
+  .bridge-row.bridge-jni    { border-color: var(--jni); }
+  .bridge-row.bridge-panama { border-color: var(--panama); }
+  .bridge-tag {
+    background: #1a1a1a;
+    padding: 0.15em 0.9em;
+    border-radius: 4px;
+    font-weight: 700;
+    font-size: 1.05em;
+    z-index: 1;
+  }
+
+  /* Pipeline pill row (slides on cbindgen / jextract) */
+  .pipeline {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 0.7em;
+    margin: 0.6em 0 1em;
+    flex-wrap: wrap;
+  }
+  .pipeline .pill {
+    padding: 6px 14px;
+    border-radius: 6px;
+    background: #2d2d2d;
+    border: 1px solid #555;
+    font-weight: 600;
+  }
+  .pipeline .pill.rust-pill { background: rgba(222,165,132,0.15); border-color: var(--rust); }
+  .pipeline .pill.java-pill { background: rgba(83,130,161,0.15); border-color: var(--java); }
+  .pipeline .arrow { color: #888; }
+  .pipeline .pill.highlight {
+    background: rgba(230,160,32,0.25);
+    border-color: var(--accent);
+    color: #fff;
+  }
+</style>
+</head>
+<body>
+<div class="reveal">
+<div class="slides">
+
+<section>
+  <h1>Native Speed, Java Comfort</h1>
+  <h3 style="color:#ccc; font-weight:300;">Calling Rust from the JVM with Project Panama</h3>
+  <p style="margin-top:2em; color:#aaa;">Gonzalo Ortiz · Devoxx UK</p>
+  <p style="font-size:0.7em; color:#666;">Apache Pinot / StarTree</p>
+  <span class="slide-num">1 / 36</span>
+</section>
+
+<section>
+  <h2>A tale of two barriers</h2>
+  <ul>
+    <li class="fragment">The isthmus that separates Java from the native world</li>
+    <li class="fragment">My Spanish accent</li>
+  </ul>
+  <span class="slide-num">2 / 36</span>
+</section>
+<section>
+  <img src="../smart.jpg" alt="" class="two-bridges-img" />
+  <span class="slide-num">3 / 36</span>
+</section>
+<section>
+  <img src="../takataka.jpg" alt="" class="two-bridges-img" style="width:66%; max-height:none; margin: auto;" />
+  <span class="slide-num">4 / 36</span>
+</section>
+<section>
+  <h2>The two bridges</h2>
+  <img src="../two-bridges.png" alt="Java and Rust connected by two bridges, JNI on top and Panama on the bottom" class="two-bridges-img" />
+  <p style="font-size:0.75em; color:#aaa; margin-top:0.6em; padding-right:5em;"><span class="tag-jni">JNI</span> — in the JDK since Java 1.1 &nbsp;·&nbsp; <span class="tag-panama">Panama FFM</span> — finalized in Java 22</p>
+  <span class="slide-num">5 / 36</span>
+</section>
+<section>
+  <h2>Same call, two philosophies</h2>
+  <div class="columns">
+    <div>
+      <p style="color:var(--jni); font-weight:bold; margin:0 0 0.2em;">JNI — object-centric</p>
+      <pre><code class="language-toml">[lib]
+crate-type = ["cdylib"] 
+
+[dependencies]
+jni = "0.21"</code></pre>
+     <ul style="font-size:0.72em; margin-top:0.5em;">
+        <li>Rust receives Java objects</li>
+        <li>JVM may pin objects</li>
+        <li>Rust crate coupled to the JVM</li>
+      </ul>
+    </div>
+    <div>
+      <p style="color:var(--panama); font-weight:bold; margin:0 0 0.2em;">Panama — mem-centric</p>
+      <pre><code class="language-toml">[lib]
+crate-type = ["cdylib"]
+
+
+
+</code></pre>
+      <ul style="font-size:0.72em; margin-top:0.5em;">
+        <li>Rust receives raw memory</li>
+        <li>No GC interaction — data lives off-heap</li>
+        <li>Same standard C ABI</li>
+        <ul style="font-size:0.65em;"><li>Already used by Python, Go, Node…</li></ul>
+      </ul>
+    </div>
+  </div>
+  <span class="slide-num">6 / 36</span>
+</section>
+
+<section>
+  <h2>Why call native code?</h2>
+  <ul>
+    <li class="fragment"><strong style="color:var(--rust)">Ecosystem access</strong> — reuse Rust/C/C++ libraries that already exist.<br>
+      <small style="color:#aaa;">ML inference (ONNX), compression (zstd), databases. Don't rewrite them.</small></li>
+    <li class="fragment"><strong style="color:var(--rust)">Ergonomics</strong> — some problems are more natural with direct memory control.<br>
+      <small style="color:#aaa;">SIMD intrinsics, memory-mapped structures, zero-copy I/O.</small></li>
+    <li class="fragment"><strong style="color:var(--rust)">Performance</strong> — bypass JIT/GC limits…<br>
+      <small style="color:#aaa;">Be careful — the JVM is surprisingly good. Native isn't a magic speed button.</small></li>
+  </ul>
+  <span class="slide-num">7 / 36</span>
+</section>
+
+<section>
+  <h2><code>add(a, b)</code></h2>
+  <div class="columns" style="gap:0.8em;">
+    <div>
+      <p style="color:var(--jni); font-weight:bold; font-size:0.6em; margin:0 0 0.1em;">JNI</p>
+      <pre style="margin:0;"><code class="language-rust" style="font-size:0.7em;" data-fragment-index="0" data-line-numbers="|3|2,4-5|6-7,8">#[no_mangle]
+pub extern "system"
+fn Java_com_example_Lib_add(
+    _env: JNIEnv, // Used to access the JVM
+    _class: JClass, // Our "Lib" class
+    a: jint,
+    b: jint,
+) -> jint {
+    a + b
+}</code></pre>
+    </div>
+    <div>
+      <p style="color:var(--panama); font-weight:bold; font-size:0.6em; margin:0 0 0.1em;">Panama</p>
+      <pre style="margin:0;"><code class="language-rust" style="font-size:0.7em;" data-fragment-index="0" data-line-numbers="|3|2|3">#[no_mangle]
+pub extern "C"
+fn add(a: i32, b: i32) -> i32 {
+    a + b
+}</code></pre>
+    </div>
+  </div>
+  <div class="columns" style="gap:0.8em; margin-top:0.2em;">
+    <div>
+      <pre style="margin:0;"><code class="language-java" style="font-size:0.7em;" data-fragment-index="0" data-line-numbers="|3|2|3,6">public class Lib {
+    static { System.loadLibrary("mylib"); }
+    public static native int add(int a, int b);
+}
+
+int r = Lib.add(2, 3);   // → 5</code></pre>
+    </div>
+    <div>
+      <pre style="margin:0;"><code class="language-java" style="font-size:0.7em;" data-fragment-index="0" data-line-numbers="|5-8|3-4|10">private static final MethodHandle ADD;
+static {
+    SymbolLookup lib = SymbolLookup.libraryLookup(
+        "libmylib.so", Arena.global());
+    ADD = Linker.nativeLinker().downcallHandle(
+        lib.find("add").orElseThrow(),
+        FunctionDescriptor.of(
+            JAVA_INT, JAVA_INT, JAVA_INT));
+}
+int r = (int) ADD.invoke(2, 3);   // → 5</code></pre>
+    </div>
+  </div>
+  <span class="slide-num">8 / 36</span>
+</section>
+
+<section>
+  <h2>Using strings</h2>
+  <div class="mermaid-static" data-source="
+sequenceDiagram
+    participant J as Java
+    participant R as Rust
+    J-&gt;&gt;R: isMatch(pat, hay)
+    Note over R: Regex::new(pat) — compile
+    Note over R: regex.is_match(hay)
+    R--&gt;&gt;J: bool
+  "><svg id="mermaid-1777888020178" width="100%" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="max-width: 476px;" viewBox="-50 -10 476 363" role="graphics-document document"><g><rect x="200" y="277" fill="#eaeaea" stroke="#666" width="150" height="65" name="R" rx="3" ry="3" class="actor actor-bottom"></rect><text x="275" y="309.5" dominant-baseline="central" alignment-baseline="central" class="actor actor-box" style="text-anchor: middle; font-size: 16px; font-weight: 400;"><tspan x="275" dy="0">Rust</tspan></text></g><g><rect x="0" y="277" fill="#eaeaea" stroke="#666" width="150" height="65" name="J" rx="3" ry="3" class="actor actor-bottom"></rect><text x="75" y="309.5" dominant-baseline="central" alignment-baseline="central" class="actor actor-box" style="text-anchor: middle; font-size: 16px; font-weight: 400;"><tspan x="75" dy="0">Java</tspan></text></g><g><line id="actor1" x1="275" y1="65" x2="275" y2="277" class="actor-line 200" stroke-width="0.5px" stroke="#999" name="R" data-et="life-line" data-id="R"></line><g id="root-1" data-et="participant" data-type="participant" data-id="R"><rect x="200" y="0" fill="#eaeaea" stroke="#666" width="150" height="65" name="R" rx="3" ry="3" class="actor actor-top"></rect><text x="275" y="32.5" dominant-baseline="central" alignment-baseline="central" class="actor actor-box" style="text-anchor: middle; font-size: 16px; font-weight: 400;"><tspan x="275" dy="0">Rust</tspan></text></g></g><g><line id="actor0" x1="75" y1="65" x2="75" y2="277" class="actor-line 200" stroke-width="0.5px" stroke="#999" name="J" data-et="life-line" data-id="J"></line><g id="root-0" data-et="participant" data-type="participant" data-id="J"><rect x="0" y="0" fill="#eaeaea" stroke="#666" width="150" height="65" name="J" rx="3" ry="3" class="actor actor-top"></rect><text x="75" y="32.5" dominant-baseline="central" alignment-baseline="central" class="actor actor-box" style="text-anchor: middle; font-size: 16px; font-weight: 400;"><tspan x="75" dy="0">Java</tspan></text></g></g><style>#mermaid-1777888020178{font-family:Source Sans Pro,Segoe UI,sans-serif;font-size:18px;fill:#ffffff;}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#mermaid-1777888020178 .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#mermaid-1777888020178 .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#mermaid-1777888020178 .error-icon{fill:#2d2d2d;}#mermaid-1777888020178 .error-text{fill:#d2d2d2;stroke:#d2d2d2;}#mermaid-1777888020178 .edge-thickness-normal{stroke-width:1px;}#mermaid-1777888020178 .edge-thickness-thick{stroke-width:3.5px;}#mermaid-1777888020178 .edge-pattern-solid{stroke-dasharray:0;}#mermaid-1777888020178 .edge-thickness-invisible{stroke-width:0;fill:none;}#mermaid-1777888020178 .edge-pattern-dashed{stroke-dasharray:3;}#mermaid-1777888020178 .edge-pattern-dotted{stroke-dasharray:2;}#mermaid-1777888020178 .marker{fill:#e6a020;stroke:#e6a020;}#mermaid-1777888020178 .marker.cross{stroke:#e6a020;}#mermaid-1777888020178 svg{font-family:Source Sans Pro,Segoe UI,sans-serif;font-size:18px;}#mermaid-1777888020178 p{margin:0;}#mermaid-1777888020178 .actor{stroke:#7aa6d6;fill:#3d4a5e;stroke-width:1;}#mermaid-1777888020178 rect.actor.outer-path[data-look="neo"]{filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#mermaid-1777888020178 rect.note[data-look="neo"]{stroke:#e6a020;fill:#4a3a1f;filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#mermaid-1777888020178 text.actor&gt;tspan{fill:#ffffff;stroke:none;}#mermaid-1777888020178 .actor-line{stroke:#3a3a3a;}#mermaid-1777888020178 .innerArc{stroke-width:1.5;stroke-dasharray:none;}#mermaid-1777888020178 .messageLine0{stroke-width:1.5;stroke-dasharray:none;stroke:#e0e0e0;}#mermaid-1777888020178 .messageLine1{stroke-width:1.5;stroke-dasharray:2,2;stroke:#e0e0e0;}#mermaid-1777888020178 [id$="-arrowhead"] path{fill:#e0e0e0;stroke:#e0e0e0;}#mermaid-1777888020178 .sequenceNumber{fill:#1a1a1a;}#mermaid-1777888020178 [id$="-sequencenumber"]{fill:#e0e0e0;}#mermaid-1777888020178 [id$="-crosshead"] path{fill:#e0e0e0;stroke:#e0e0e0;}#mermaid-1777888020178 .messageText{fill:#e0e0e0;stroke:none;}#mermaid-1777888020178 .labelBox{stroke:#7aa6d6;fill:#3d4a5e;filter:none;}#mermaid-1777888020178 .labelText,#mermaid-1777888020178 .labelText&gt;tspan{fill:#ffffff;stroke:none;}#mermaid-1777888020178 .loopText,#mermaid-1777888020178 .loopText&gt;tspan{fill:#e0e0e0;stroke:none;}#mermaid-1777888020178 .loopLine{stroke-width:2px;stroke-dasharray:2,2;stroke:#7aa6d6;fill:#7aa6d6;}#mermaid-1777888020178 .note{stroke:#e6a020;fill:#4a3a1f;}#mermaid-1777888020178 .noteText,#mermaid-1777888020178 .noteText&gt;tspan{fill:#ffe9b4;stroke:none;font-weight:normal;}#mermaid-1777888020178 .activation0{fill:#5a5a5a;stroke:#aaa;}#mermaid-1777888020178 .activation1{fill:#5a5a5a;stroke:#aaa;}#mermaid-1777888020178 .activation2{fill:#5a5a5a;stroke:#aaa;}#mermaid-1777888020178 .actorPopupMenu{position:absolute;}#mermaid-1777888020178 .actorPopupMenuPanel{position:absolute;fill:#3d4a5e;box-shadow:0px 8px 16px 0px rgba(0,0,0,0.2);filter:drop-shadow(3px 5px 2px rgb(0 0 0 / 0.4));}#mermaid-1777888020178 .actor-man circle,#mermaid-1777888020178 line{fill:#3d4a5e;stroke-width:2px;}#mermaid-1777888020178 g rect.rect{filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));stroke:#7aa6d6;}#mermaid-1777888020178 .node .neo-node{stroke:#7aa6d6;}#mermaid-1777888020178 [data-look="neo"].node rect,#mermaid-1777888020178 [data-look="neo"].cluster rect,#mermaid-1777888020178 [data-look="neo"].node polygon{stroke:url(#mermaid-1777888020178-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#mermaid-1777888020178 [data-look="neo"].node path{stroke:url(#mermaid-1777888020178-gradient);stroke-width:1px;}#mermaid-1777888020178 [data-look="neo"].node .outer-path{filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#mermaid-1777888020178 [data-look="neo"].node .neo-line path{stroke:#7aa6d6;filter:none;}#mermaid-1777888020178 [data-look="neo"].node circle{stroke:url(#mermaid-1777888020178-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#mermaid-1777888020178 [data-look="neo"].node circle .state-start{fill:#000000;}#mermaid-1777888020178 [data-look="neo"].icon-shape .icon{fill:url(#mermaid-1777888020178-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#mermaid-1777888020178 [data-look="neo"].icon-shape .icon-neo path{stroke:url(#mermaid-1777888020178-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#mermaid-1777888020178 :root{--mermaid-font-family:"trebuchet ms",verdana,arial,sans-serif;}</style><g></g><defs><symbol id="mermaid-1777888020178-computer" width="24" height="24"><path transform="scale(.5)" d="M2 2v13h20v-13h-20zm18 11h-16v-9h16v9zm-10.228 6l.466-1h3.524l.467 1h-4.457zm14.228 3h-24l2-6h2.104l-1.33 4h18.45l-1.297-4h2.073l2 6zm-5-10h-14v-7h14v7z"></path></symbol></defs><defs><symbol id="mermaid-1777888020178-database" fill-rule="evenodd" clip-rule="evenodd"><path transform="scale(.5)" d="M12.258.001l.256.004.255.005.253.008.251.01.249.012.247.015.246.016.242.019.241.02.239.023.236.024.233.027.231.028.229.031.225.032.223.034.22.036.217.038.214.04.211.041.208.043.205.045.201.046.198.048.194.05.191.051.187.053.183.054.18.056.175.057.172.059.168.06.163.061.16.063.155.064.15.066.074.033.073.033.071.034.07.034.069.035.068.035.067.035.066.035.064.036.064.036.062.036.06.036.06.037.058.037.058.037.055.038.055.038.053.038.052.038.051.039.05.039.048.039.047.039.045.04.044.04.043.04.041.04.04.041.039.041.037.041.036.041.034.041.033.042.032.042.03.042.029.042.027.042.026.043.024.043.023.043.021.043.02.043.018.044.017.043.015.044.013.044.012.044.011.045.009.044.007.045.006.045.004.045.002.045.001.045v17l-.001.045-.002.045-.004.045-.006.045-.007.045-.009.044-.011.045-.012.044-.013.044-.015.044-.017.043-.018.044-.02.043-.021.043-.023.043-.024.043-.026.043-.027.042-.029.042-.03.042-.032.042-.033.042-.034.041-.036.041-.037.041-.039.041-.04.041-.041.04-.043.04-.044.04-.045.04-.047.039-.048.039-.05.039-.051.039-.052.038-.053.038-.055.038-.055.038-.058.037-.058.037-.06.037-.06.036-.062.036-.064.036-.064.036-.066.035-.067.035-.068.035-.069.035-.07.034-.071.034-.073.033-.074.033-.15.066-.155.064-.16.063-.163.061-.168.06-.172.059-.175.057-.18.056-.183.054-.187.053-.191.051-.194.05-.198.048-.201.046-.205.045-.208.043-.211.041-.214.04-.217.038-.22.036-.223.034-.225.032-.229.031-.231.028-.233.027-.236.024-.239.023-.241.02-.242.019-.246.016-.247.015-.249.012-.251.01-.253.008-.255.005-.256.004-.258.001-.258-.001-.256-.004-.255-.005-.253-.008-.251-.01-.249-.012-.247-.015-.245-.016-.243-.019-.241-.02-.238-.023-.236-.024-.234-.027-.231-.028-.228-.031-.226-.032-.223-.034-.22-.036-.217-.038-.214-.04-.211-.041-.208-.043-.204-.045-.201-.046-.198-.048-.195-.05-.19-.051-.187-.053-.184-.054-.179-.056-.176-.057-.172-.059-.167-.06-.164-.061-.159-.063-.155-.064-.151-.066-.074-.033-.072-.033-.072-.034-.07-.034-.069-.035-.068-.035-.067-.035-.066-.035-.064-.036-.063-.036-.062-.036-.061-.036-.06-.037-.058-.037-.057-.037-.056-.038-.055-.038-.053-.038-.052-.038-.051-.039-.049-.039-.049-.039-.046-.039-.046-.04-.044-.04-.043-.04-.041-.04-.04-.041-.039-.041-.037-.041-.036-.041-.034-.041-.033-.042-.032-.042-.03-.042-.029-.042-.027-.042-.026-.043-.024-.043-.023-.043-.021-.043-.02-.043-.018-.044-.017-.043-.015-.044-.013-.044-.012-.044-.011-.045-.009-.044-.007-.045-.006-.045-.004-.045-.002-.045-.001-.045v-17l.001-.045.002-.045.004-.045.006-.045.007-.045.009-.044.011-.045.012-.044.013-.044.015-.044.017-.043.018-.044.02-.043.021-.043.023-.043.024-.043.026-.043.027-.042.029-.042.03-.042.032-.042.033-.042.034-.041.036-.041.037-.041.039-.041.04-.041.041-.04.043-.04.044-.04.046-.04.046-.039.049-.039.049-.039.051-.039.052-.038.053-.038.055-.038.056-.038.057-.037.058-.037.06-.037.061-.036.062-.036.063-.036.064-.036.066-.035.067-.035.068-.035.069-.035.07-.034.072-.034.072-.033.074-.033.151-.066.155-.064.159-.063.164-.061.167-.06.172-.059.176-.057.179-.056.184-.054.187-.053.19-.051.195-.05.198-.048.201-.046.204-.045.208-.043.211-.041.214-.04.217-.038.22-.036.223-.034.226-.032.228-.031.231-.028.234-.027.236-.024.238-.023.241-.02.243-.019.245-.016.247-.015.249-.012.251-.01.253-.008.255-.005.256-.004.258-.001.258.001zm-9.258 20.499v.01l.001.021.003.021.004.022.005.021.006.022.007.022.009.023.01.022.011.023.012.023.013.023.015.023.016.024.017.023.018.024.019.024.021.024.022.025.023.024.024.025.052.049.056.05.061.051.066.051.07.051.075.051.079.052.084.052.088.052.092.052.097.052.102.051.105.052.11.052.114.051.119.051.123.051.127.05.131.05.135.05.139.048.144.049.147.047.152.047.155.047.16.045.163.045.167.043.171.043.176.041.178.041.183.039.187.039.19.037.194.035.197.035.202.033.204.031.209.03.212.029.216.027.219.025.222.024.226.021.23.02.233.018.236.016.24.015.243.012.246.01.249.008.253.005.256.004.259.001.26-.001.257-.004.254-.005.25-.008.247-.011.244-.012.241-.014.237-.016.233-.018.231-.021.226-.021.224-.024.22-.026.216-.027.212-.028.21-.031.205-.031.202-.034.198-.034.194-.036.191-.037.187-.039.183-.04.179-.04.175-.042.172-.043.168-.044.163-.045.16-.046.155-.046.152-.047.148-.048.143-.049.139-.049.136-.05.131-.05.126-.05.123-.051.118-.052.114-.051.11-.052.106-.052.101-.052.096-.052.092-.052.088-.053.083-.051.079-.052.074-.052.07-.051.065-.051.06-.051.056-.05.051-.05.023-.024.023-.025.021-.024.02-.024.019-.024.018-.024.017-.024.015-.023.014-.024.013-.023.012-.023.01-.023.01-.022.008-.022.006-.022.006-.022.004-.022.004-.021.001-.021.001-.021v-4.127l-.077.055-.08.053-.083.054-.085.053-.087.052-.09.052-.093.051-.095.05-.097.05-.1.049-.102.049-.105.048-.106.047-.109.047-.111.046-.114.045-.115.045-.118.044-.12.043-.122.042-.124.042-.126.041-.128.04-.13.04-.132.038-.134.038-.135.037-.138.037-.139.035-.142.035-.143.034-.144.033-.147.032-.148.031-.15.03-.151.03-.153.029-.154.027-.156.027-.158.026-.159.025-.161.024-.162.023-.163.022-.165.021-.166.02-.167.019-.169.018-.169.017-.171.016-.173.015-.173.014-.175.013-.175.012-.177.011-.178.01-.179.008-.179.008-.181.006-.182.005-.182.004-.184.003-.184.002h-.37l-.184-.002-.184-.003-.182-.004-.182-.005-.181-.006-.179-.008-.179-.008-.178-.01-.176-.011-.176-.012-.175-.013-.173-.014-.172-.015-.171-.016-.17-.017-.169-.018-.167-.019-.166-.02-.165-.021-.163-.022-.162-.023-.161-.024-.159-.025-.157-.026-.156-.027-.155-.027-.153-.029-.151-.03-.15-.03-.148-.031-.146-.032-.145-.033-.143-.034-.141-.035-.14-.035-.137-.037-.136-.037-.134-.038-.132-.038-.13-.04-.128-.04-.126-.041-.124-.042-.122-.042-.12-.044-.117-.043-.116-.045-.113-.045-.112-.046-.109-.047-.106-.047-.105-.048-.102-.049-.1-.049-.097-.05-.095-.05-.093-.052-.09-.051-.087-.052-.085-.053-.083-.054-.08-.054-.077-.054v4.127zm0-5.654v.011l.001.021.003.021.004.021.005.022.006.022.007.022.009.022.01.022.011.023.012.023.013.023.015.024.016.023.017.024.018.024.019.024.021.024.022.024.023.025.024.024.052.05.056.05.061.05.066.051.07.051.075.052.079.051.084.052.088.052.092.052.097.052.102.052.105.052.11.051.114.051.119.052.123.05.127.051.131.05.135.049.139.049.144.048.147.048.152.047.155.046.16.045.163.045.167.044.171.042.176.042.178.04.183.04.187.038.19.037.194.036.197.034.202.033.204.032.209.03.212.028.216.027.219.025.222.024.226.022.23.02.233.018.236.016.24.014.243.012.246.01.249.008.253.006.256.003.259.001.26-.001.257-.003.254-.006.25-.008.247-.01.244-.012.241-.015.237-.016.233-.018.231-.02.226-.022.224-.024.22-.025.216-.027.212-.029.21-.03.205-.032.202-.033.198-.035.194-.036.191-.037.187-.039.183-.039.179-.041.175-.042.172-.043.168-.044.163-.045.16-.045.155-.047.152-.047.148-.048.143-.048.139-.05.136-.049.131-.05.126-.051.123-.051.118-.051.114-.052.11-.052.106-.052.101-.052.096-.052.092-.052.088-.052.083-.052.079-.052.074-.051.07-.052.065-.051.06-.05.056-.051.051-.049.023-.025.023-.024.021-.025.02-.024.019-.024.018-.024.017-.024.015-.023.014-.023.013-.024.012-.022.01-.023.01-.023.008-.022.006-.022.006-.022.004-.021.004-.022.001-.021.001-.021v-4.139l-.077.054-.08.054-.083.054-.085.052-.087.053-.09.051-.093.051-.095.051-.097.05-.1.049-.102.049-.105.048-.106.047-.109.047-.111.046-.114.045-.115.044-.118.044-.12.044-.122.042-.124.042-.126.041-.128.04-.13.039-.132.039-.134.038-.135.037-.138.036-.139.036-.142.035-.143.033-.144.033-.147.033-.148.031-.15.03-.151.03-.153.028-.154.028-.156.027-.158.026-.159.025-.161.024-.162.023-.163.022-.165.021-.166.02-.167.019-.169.018-.169.017-.171.016-.173.015-.173.014-.175.013-.175.012-.177.011-.178.009-.179.009-.179.007-.181.007-.182.005-.182.004-.184.003-.184.002h-.37l-.184-.002-.184-.003-.182-.004-.182-.005-.181-.007-.179-.007-.179-.009-.178-.009-.176-.011-.176-.012-.175-.013-.173-.014-.172-.015-.171-.016-.17-.017-.169-.018-.167-.019-.166-.02-.165-.021-.163-.022-.162-.023-.161-.024-.159-.025-.157-.026-.156-.027-.155-.028-.153-.028-.151-.03-.15-.03-.148-.031-.146-.033-.145-.033-.143-.033-.141-.035-.14-.036-.137-.036-.136-.037-.134-.038-.132-.039-.13-.039-.128-.04-.126-.041-.124-.042-.122-.043-.12-.043-.117-.044-.116-.044-.113-.046-.112-.046-.109-.046-.106-.047-.105-.048-.102-.049-.1-.049-.097-.05-.095-.051-.093-.051-.09-.051-.087-.053-.085-.052-.083-.054-.08-.054-.077-.054v4.139zm0-5.666v.011l.001.02.003.022.004.021.005.022.006.021.007.022.009.023.01.022.011.023.012.023.013.023.015.023.016.024.017.024.018.023.019.024.021.025.022.024.023.024.024.025.052.05.056.05.061.05.066.051.07.051.075.052.079.051.084.052.088.052.092.052.097.052.102.052.105.051.11.052.114.051.119.051.123.051.127.05.131.05.135.05.139.049.144.048.147.048.152.047.155.046.16.045.163.045.167.043.171.043.176.042.178.04.183.04.187.038.19.037.194.036.197.034.202.033.204.032.209.03.212.028.216.027.219.025.222.024.226.021.23.02.233.018.236.017.24.014.243.012.246.01.249.008.253.006.256.003.259.001.26-.001.257-.003.254-.006.25-.008.247-.01.244-.013.241-.014.237-.016.233-.018.231-.02.226-.022.224-.024.22-.025.216-.027.212-.029.21-.03.205-.032.202-.033.198-.035.194-.036.191-.037.187-.039.183-.039.179-.041.175-.042.172-.043.168-.044.163-.045.16-.045.155-.047.152-.047.148-.048.143-.049.139-.049.136-.049.131-.051.126-.05.123-.051.118-.052.114-.051.11-.052.106-.052.101-.052.096-.052.092-.052.088-.052.083-.052.079-.052.074-.052.07-.051.065-.051.06-.051.056-.05.051-.049.023-.025.023-.025.021-.024.02-.024.019-.024.018-.024.017-.024.015-.023.014-.024.013-.023.012-.023.01-.022.01-.023.008-.022.006-.022.006-.022.004-.022.004-.021.001-.021.001-.021v-4.153l-.077.054-.08.054-.083.053-.085.053-.087.053-.09.051-.093.051-.095.051-.097.05-.1.049-.102.048-.105.048-.106.048-.109.046-.111.046-.114.046-.115.044-.118.044-.12.043-.122.043-.124.042-.126.041-.128.04-.13.039-.132.039-.134.038-.135.037-.138.036-.139.036-.142.034-.143.034-.144.033-.147.032-.148.032-.15.03-.151.03-.153.028-.154.028-.156.027-.158.026-.159.024-.161.024-.162.023-.163.023-.165.021-.166.02-.167.019-.169.018-.169.017-.171.016-.173.015-.173.014-.175.013-.175.012-.177.01-.178.01-.179.009-.179.007-.181.006-.182.006-.182.004-.184.003-.184.001-.185.001-.185-.001-.184-.001-.184-.003-.182-.004-.182-.006-.181-.006-.179-.007-.179-.009-.178-.01-.176-.01-.176-.012-.175-.013-.173-.014-.172-.015-.171-.016-.17-.017-.169-.018-.167-.019-.166-.02-.165-.021-.163-.023-.162-.023-.161-.024-.159-.024-.157-.026-.156-.027-.155-.028-.153-.028-.151-.03-.15-.03-.148-.032-.146-.032-.145-.033-.143-.034-.141-.034-.14-.036-.137-.036-.136-.037-.134-.038-.132-.039-.13-.039-.128-.041-.126-.041-.124-.041-.122-.043-.12-.043-.117-.044-.116-.044-.113-.046-.112-.046-.109-.046-.106-.048-.105-.048-.102-.048-.1-.05-.097-.049-.095-.051-.093-.051-.09-.052-.087-.052-.085-.053-.083-.053-.08-.054-.077-.054v4.153zm8.74-8.179l-.257.004-.254.005-.25.008-.247.011-.244.012-.241.014-.237.016-.233.018-.231.021-.226.022-.224.023-.22.026-.216.027-.212.028-.21.031-.205.032-.202.033-.198.034-.194.036-.191.038-.187.038-.183.04-.179.041-.175.042-.172.043-.168.043-.163.045-.16.046-.155.046-.152.048-.148.048-.143.048-.139.049-.136.05-.131.05-.126.051-.123.051-.118.051-.114.052-.11.052-.106.052-.101.052-.096.052-.092.052-.088.052-.083.052-.079.052-.074.051-.07.052-.065.051-.06.05-.056.05-.051.05-.023.025-.023.024-.021.024-.02.025-.019.024-.018.024-.017.023-.015.024-.014.023-.013.023-.012.023-.01.023-.01.022-.008.022-.006.023-.006.021-.004.022-.004.021-.001.021-.001.021.001.021.001.021.004.021.004.022.006.021.006.023.008.022.01.022.01.023.012.023.013.023.014.023.015.024.017.023.018.024.019.024.02.025.021.024.023.024.023.025.051.05.056.05.06.05.065.051.07.052.074.051.079.052.083.052.088.052.092.052.096.052.101.052.106.052.11.052.114.052.118.051.123.051.126.051.131.05.136.05.139.049.143.048.148.048.152.048.155.046.16.046.163.045.168.043.172.043.175.042.179.041.183.04.187.038.191.038.194.036.198.034.202.033.205.032.21.031.212.028.216.027.22.026.224.023.226.022.231.021.233.018.237.016.241.014.244.012.247.011.25.008.254.005.257.004.26.001.26-.001.257-.004.254-.005.25-.008.247-.011.244-.012.241-.014.237-.016.233-.018.231-.021.226-.022.224-.023.22-.026.216-.027.212-.028.21-.031.205-.032.202-.033.198-.034.194-.036.191-.038.187-.038.183-.04.179-.041.175-.042.172-.043.168-.043.163-.045.16-.046.155-.046.152-.048.148-.048.143-.048.139-.049.136-.05.131-.05.126-.051.123-.051.118-.051.114-.052.11-.052.106-.052.101-.052.096-.052.092-.052.088-.052.083-.052.079-.052.074-.051.07-.052.065-.051.06-.05.056-.05.051-.05.023-.025.023-.024.021-.024.02-.025.019-.024.018-.024.017-.023.015-.024.014-.023.013-.023.012-.023.01-.023.01-.022.008-.022.006-.023.006-.021.004-.022.004-.021.001-.021.001-.021-.001-.021-.001-.021-.004-.021-.004-.022-.006-.021-.006-.023-.008-.022-.01-.022-.01-.023-.012-.023-.013-.023-.014-.023-.015-.024-.017-.023-.018-.024-.019-.024-.02-.025-.021-.024-.023-.024-.023-.025-.051-.05-.056-.05-.06-.05-.065-.051-.07-.052-.074-.051-.079-.052-.083-.052-.088-.052-.092-.052-.096-.052-.101-.052-.106-.052-.11-.052-.114-.052-.118-.051-.123-.051-.126-.051-.131-.05-.136-.05-.139-.049-.143-.048-.148-.048-.152-.048-.155-.046-.16-.046-.163-.045-.168-.043-.172-.043-.175-.042-.179-.041-.183-.04-.187-.038-.191-.038-.194-.036-.198-.034-.202-.033-.205-.032-.21-.031-.212-.028-.216-.027-.22-.026-.224-.023-.226-.022-.231-.021-.233-.018-.237-.016-.241-.014-.244-.012-.247-.011-.25-.008-.254-.005-.257-.004-.26-.001-.26.001z"></path></symbol></defs><defs><symbol id="mermaid-1777888020178-clock" width="24" height="24"><path transform="scale(.5)" d="M12 2c5.514 0 10 4.486 10 10s-4.486 10-10 10-10-4.486-10-10 4.486-10 10-10zm0-2c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm5.848 12.459c.202.038.202.333.001.372-1.907.361-6.045 1.111-6.547 1.111-.719 0-1.301-.582-1.301-1.301 0-.512.77-5.447 1.125-7.445.034-.192.312-.181.343.014l.985 6.238 5.394 1.011z"></path></symbol></defs><defs><marker id="mermaid-1777888020178-arrowhead" refX="7.9" refY="5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto-start-reverse"><path d="M -1 0 L 10 5 L 0 10 z"></path></marker></defs><defs><marker id="mermaid-1777888020178-crosshead" markerWidth="15" markerHeight="8" orient="auto" refX="4" refY="4.5"><path fill="none" stroke="#000000" stroke-width="1pt" d="M 1,2 L 6,7 M 6,2 L 1,7" style="stroke-dasharray: 0, 0;"></path></marker></defs><defs><marker id="mermaid-1777888020178-filled-head" refX="15.5" refY="7" markerWidth="20" markerHeight="28" orient="auto"><path d="M 18,7 L9,13 L14,7 L9,1 Z"></path></marker></defs><defs><marker id="mermaid-1777888020178-sequencenumber" refX="15" refY="15" markerWidth="60" markerHeight="40" orient="auto"><circle cx="15" cy="15" r="6"></circle></marker></defs><defs><marker id="mermaid-1777888020178-solidTopArrowHead" refX="7.9" refY="7.25" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto-start-reverse"><path d="M 0 0 L 10 8 L 0 8 z"></path></marker></defs><defs><marker id="mermaid-1777888020178-solidBottomArrowHead" refX="7.9" refY="0.75" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto-start-reverse"><path d="M 0 0 L 10 0 L 0 8 z"></path></marker></defs><defs><marker id="mermaid-1777888020178-stickTopArrowHead" refX="7.5" refY="7" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto-start-reverse"><path d="M 0 0 L 7 7" stroke="black" stroke-width="1.5" fill="none"></path></marker></defs><defs><marker id="mermaid-1777888020178-stickBottomArrowHead" refX="7.5" refY="0" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto-start-reverse"><path d="M 0 7 L 7 0" stroke="black" stroke-width="1.5" fill="none"></path></marker></defs><g data-et="note" data-id="i1"><rect x="174" y="121" fill="#EDF2AE" stroke="#666" width="202" height="40" class="note"></rect><text x="275" y="126" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" class="noteText" dy="1em" style="font-size: 16px; font-weight: 400;"><tspan x="275">Regex::new(pat) — compile</tspan></text></g><g data-et="note" data-id="i2"><rect x="199.5" y="171" fill="#EDF2AE" stroke="#666" width="151" height="40" class="note"></rect><text x="275" y="176" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" class="noteText" dy="1em" style="font-size: 16px; font-weight: 400;"><tspan x="275">regex.is_match(hay)</tspan></text></g><text x="174" y="80" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" class="messageText" dy="1em" style="font-size: 16px; font-weight: 400;">isMatch(pat, hay)</text><line x1="76" y1="111" x2="271" y2="111" class="messageLine0" data-et="message" data-id="i0" data-from="J" data-to="R" stroke-width="2" stroke="none" marker-end="url(#mermaid-1777888020178-arrowhead)" style="fill: none;"></line><text x="177" y="226" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" class="messageText" dy="1em" style="font-size: 16px; font-weight: 400;">bool</text><line x1="274" y1="257" x2="79" y2="257" class="messageLine1" data-et="message" data-id="i3" data-from="R" data-to="J" stroke-width="2" stroke="none" marker-end="url(#mermaid-1777888020178-arrowhead)" style="stroke-dasharray: 3, 3; fill: none;"></line></svg></div>
+  <span class="slide-num">9 / 36</span>
+</section>
+
+<section>
+  <h2><code>isMatch(pat, hay)</code> — Rust</h2>
+  <div class="columns" style="gap:0.8em;">
+    <div>
+      <p style="color:var(--jni); font-weight:bold; font-size:0.7em; margin:0 0 0.2em;">JNI</p>
+      <pre style="margin:0;"><code class="language-rust" style="font-size:0.7em;" data-fragment-index="0" data-line-numbers="|6,7|9-12">#[no_mangle]
+pub extern "system" 
+fn Java_org_example_rust_JniRsRegex_isMatch(
+    mut env: JNIEnv,
+    _class: JClass,
+    pattern: JString, // pointer to Java String
+    haystack: JString, // pointer to Java String
+) -> jboolean {
+    let pat: String = env.get_string(&pattern)
+      .unwrap().into();
+    let hay: String = env.get_string(&haystack)
+      .unwrap().into();
+    Regex::new(&pat).unwrap().is_match(&hay) 
+      as jboolean
+}</code></pre>
+    </div>
+    <div>
+      <p style="color:var(--panama); font-weight:bold; font-size:0.7em; margin:0 0 0.2em;">Panama</p>
+      <pre style="margin:0;"><code class="language-rust" style="font-size:0.7em;" data-fragment-index="0" data-line-numbers="|3,4|6-9">#[no_mangle]
+pub extern "C" fn is_match_once(
+    pat_ptr: *const u8, pat_len: usize,
+    hay_ptr: *const u8, hay_len: usize,
+) -> bool {
+    let pat = unsafe { 
+      std::str::from_utf8_unchecked(
+        std::slice::from_raw_parts(
+          pat_ptr, pat_len)) };
+    let hay = unsafe { 
+      std::str::from_utf8_unchecked(
+        std::slice::from_raw_parts(
+          hay_ptr, hay_len)) };
+    Regex::new(pat).unwrap().is_match(hay)
+}</code></pre>
+    </div>
+  </div>
+  <span class="slide-num">10 / 36</span>
+</section>
+<section>
+  <h2><code>isMatch(pat, hay)</code> — Java</h2>
+  <div class="columns" style="gap:0.8em;">
+    <div>
+      <p style="color:var(--jni); font-weight:bold; font-size:0.7em; margin:0 0 0.2em;">JNI</p>
+      <pre style="margin:0;"><code class="language-java" style="font-size:0.7em;" data-line-numbers="" data-fragment-index="0">public class JniRsRegex {
+    static {
+        System.loadLibrary("jrs_regex");
+    }
+
+    private static native boolean isMatch(
+        String pat, String hay);
+}
+
+// Usage
+boolean m = JniRsRegex.isMatch(
+    "[a-z]+@[a-z]+\.com", "user@example.com");</code></pre>
+    </div>
+    <div>
+      <p style="color:var(--panama); font-weight:bold; font-size:0.7em; margin:0 0 0.2em;">Panama</p>
+      <pre style="margin:0;"><code class="language-java" style="font-size:0.7em;" data-fragment-index="0" data-line-numbers="|6|7-12|13,14">static final MethodHandle IS_MATCH = Linker
+          .libraryLookup(...)
+          .downcallHandle(...);
+
+public boolean isMatch(String pat, String hay) {
+    try (Arena arena = Arena.ofConfined()) {
+        MemorySegment cP = arena.allocateFrom(
+            JAVA_BYTE, 
+            pat.getBytes(UTF_8);
+        MemorySegment cH = arena.allocateFrom(
+            JAVA_BYTE, 
+            hay.getBytes(UTF_8));
+        return (boolean) IS_MATCH.invoke(
+            cP, pat.length(), cH, hay.length());
+    }
+}</code></pre>
+    </div>
+  </div>
+  <div class="callout danger-callout" style="margin-top:0.5em; font-size:0.8em;">
+    ⚠ Hidden bug — spot it before the next slide
+  </div>
+  <span class="slide-num">11 / 36</span>
+</section>
+
+
+<section>
+  <h2>Compile every call &nbsp;→&nbsp; compile once</h2>
+  <div class="problem-solution">
+    <div class="ps-side">
+      <p class="ps-label" style="color:#e74c3c;">❌ Problem: rebuild on every call</p>
+      <div class="mermaid-static" data-source="
+sequenceDiagram
+    participant J as Java
+    participant R as Rust
+    J-&gt;&gt;R: isMatch(&quot;a+&quot;, &quot;aaa&quot;)
+    Note over R: Regex::new — BUILD
+    Note over R: is_match / drop — FREE
+    R--&gt;&gt;J: true
+    J-&gt;&gt;R: isMatch(&quot;a+&quot;, &quot;bbb&quot;)
+    Note over R: Regex::new — BUILD again
+    Note over R: is_match / drop — FREE
+    R--&gt;&gt;J: false
+    J-&gt;&gt;R: isMatch(&quot;a+&quot;, &quot;ccc&quot;)
+    Note over R: Regex::new — BUILD again…
+      "><svg id="mermaid-1777888020208" width="100%" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="max-width: 493px;" viewBox="-50 -10 493 651" role="graphics-document document"><g><rect x="206" y="565" fill="#eaeaea" stroke="#666" width="150" height="65" name="R" rx="3" ry="3" class="actor actor-bottom"></rect><text x="281" y="597.5" dominant-baseline="central" alignment-baseline="central" class="actor actor-box" style="text-anchor: middle; font-size: 16px; font-weight: 400;"><tspan x="281" dy="0">Rust</tspan></text></g><g><rect x="0" y="565" fill="#eaeaea" stroke="#666" width="150" height="65" name="J" rx="3" ry="3" class="actor actor-bottom"></rect><text x="75" y="597.5" dominant-baseline="central" alignment-baseline="central" class="actor actor-box" style="text-anchor: middle; font-size: 16px; font-weight: 400;"><tspan x="75" dy="0">Java</tspan></text></g><g><line id="actor3" x1="281" y1="65" x2="281" y2="565" class="actor-line 200" stroke-width="0.5px" stroke="#999" name="R" data-et="life-line" data-id="R"></line><g id="root-3" data-et="participant" data-type="participant" data-id="R"><rect x="206" y="0" fill="#eaeaea" stroke="#666" width="150" height="65" name="R" rx="3" ry="3" class="actor actor-top"></rect><text x="281" y="32.5" dominant-baseline="central" alignment-baseline="central" class="actor actor-box" style="text-anchor: middle; font-size: 16px; font-weight: 400;"><tspan x="281" dy="0">Rust</tspan></text></g></g><g><line id="actor2" x1="75" y1="65" x2="75" y2="565" class="actor-line 200" stroke-width="0.5px" stroke="#999" name="J" data-et="life-line" data-id="J"></line><g id="root-2" data-et="participant" data-type="participant" data-id="J"><rect x="0" y="0" fill="#eaeaea" stroke="#666" width="150" height="65" name="J" rx="3" ry="3" class="actor actor-top"></rect><text x="75" y="32.5" dominant-baseline="central" alignment-baseline="central" class="actor actor-box" style="text-anchor: middle; font-size: 16px; font-weight: 400;"><tspan x="75" dy="0">Java</tspan></text></g></g><style>#mermaid-1777888020208{font-family:Source Sans Pro,Segoe UI,sans-serif;font-size:18px;fill:#ffffff;}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#mermaid-1777888020208 .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#mermaid-1777888020208 .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#mermaid-1777888020208 .error-icon{fill:#2d2d2d;}#mermaid-1777888020208 .error-text{fill:#d2d2d2;stroke:#d2d2d2;}#mermaid-1777888020208 .edge-thickness-normal{stroke-width:1px;}#mermaid-1777888020208 .edge-thickness-thick{stroke-width:3.5px;}#mermaid-1777888020208 .edge-pattern-solid{stroke-dasharray:0;}#mermaid-1777888020208 .edge-thickness-invisible{stroke-width:0;fill:none;}#mermaid-1777888020208 .edge-pattern-dashed{stroke-dasharray:3;}#mermaid-1777888020208 .edge-pattern-dotted{stroke-dasharray:2;}#mermaid-1777888020208 .marker{fill:#e6a020;stroke:#e6a020;}#mermaid-1777888020208 .marker.cross{stroke:#e6a020;}#mermaid-1777888020208 svg{font-family:Source Sans Pro,Segoe UI,sans-serif;font-size:18px;}#mermaid-1777888020208 p{margin:0;}#mermaid-1777888020208 .actor{stroke:#7aa6d6;fill:#3d4a5e;stroke-width:1;}#mermaid-1777888020208 rect.actor.outer-path[data-look="neo"]{filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#mermaid-1777888020208 rect.note[data-look="neo"]{stroke:#e6a020;fill:#4a3a1f;filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#mermaid-1777888020208 text.actor&gt;tspan{fill:#ffffff;stroke:none;}#mermaid-1777888020208 .actor-line{stroke:#3a3a3a;}#mermaid-1777888020208 .innerArc{stroke-width:1.5;stroke-dasharray:none;}#mermaid-1777888020208 .messageLine0{stroke-width:1.5;stroke-dasharray:none;stroke:#e0e0e0;}#mermaid-1777888020208 .messageLine1{stroke-width:1.5;stroke-dasharray:2,2;stroke:#e0e0e0;}#mermaid-1777888020208 [id$="-arrowhead"] path{fill:#e0e0e0;stroke:#e0e0e0;}#mermaid-1777888020208 .sequenceNumber{fill:#1a1a1a;}#mermaid-1777888020208 [id$="-sequencenumber"]{fill:#e0e0e0;}#mermaid-1777888020208 [id$="-crosshead"] path{fill:#e0e0e0;stroke:#e0e0e0;}#mermaid-1777888020208 .messageText{fill:#e0e0e0;stroke:none;}#mermaid-1777888020208 .labelBox{stroke:#7aa6d6;fill:#3d4a5e;filter:none;}#mermaid-1777888020208 .labelText,#mermaid-1777888020208 .labelText&gt;tspan{fill:#ffffff;stroke:none;}#mermaid-1777888020208 .loopText,#mermaid-1777888020208 .loopText&gt;tspan{fill:#e0e0e0;stroke:none;}#mermaid-1777888020208 .loopLine{stroke-width:2px;stroke-dasharray:2,2;stroke:#7aa6d6;fill:#7aa6d6;}#mermaid-1777888020208 .note{stroke:#e6a020;fill:#4a3a1f;}#mermaid-1777888020208 .noteText,#mermaid-1777888020208 .noteText&gt;tspan{fill:#ffe9b4;stroke:none;font-weight:normal;}#mermaid-1777888020208 .activation0{fill:#5a5a5a;stroke:#aaa;}#mermaid-1777888020208 .activation1{fill:#5a5a5a;stroke:#aaa;}#mermaid-1777888020208 .activation2{fill:#5a5a5a;stroke:#aaa;}#mermaid-1777888020208 .actorPopupMenu{position:absolute;}#mermaid-1777888020208 .actorPopupMenuPanel{position:absolute;fill:#3d4a5e;box-shadow:0px 8px 16px 0px rgba(0,0,0,0.2);filter:drop-shadow(3px 5px 2px rgb(0 0 0 / 0.4));}#mermaid-1777888020208 .actor-man circle,#mermaid-1777888020208 line{fill:#3d4a5e;stroke-width:2px;}#mermaid-1777888020208 g rect.rect{filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));stroke:#7aa6d6;}#mermaid-1777888020208 .node .neo-node{stroke:#7aa6d6;}#mermaid-1777888020208 [data-look="neo"].node rect,#mermaid-1777888020208 [data-look="neo"].cluster rect,#mermaid-1777888020208 [data-look="neo"].node polygon{stroke:url(#mermaid-1777888020208-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#mermaid-1777888020208 [data-look="neo"].node path{stroke:url(#mermaid-1777888020208-gradient);stroke-width:1px;}#mermaid-1777888020208 [data-look="neo"].node .outer-path{filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#mermaid-1777888020208 [data-look="neo"].node .neo-line path{stroke:#7aa6d6;filter:none;}#mermaid-1777888020208 [data-look="neo"].node circle{stroke:url(#mermaid-1777888020208-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#mermaid-1777888020208 [data-look="neo"].node circle .state-start{fill:#000000;}#mermaid-1777888020208 [data-look="neo"].icon-shape .icon{fill:url(#mermaid-1777888020208-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#mermaid-1777888020208 [data-look="neo"].icon-shape .icon-neo path{stroke:url(#mermaid-1777888020208-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#mermaid-1777888020208 :root{--mermaid-font-family:"trebuchet ms",verdana,arial,sans-serif;}</style><g></g><defs><symbol id="mermaid-1777888020208-computer" width="24" height="24"><path transform="scale(.5)" d="M2 2v13h20v-13h-20zm18 11h-16v-9h16v9zm-10.228 6l.466-1h3.524l.467 1h-4.457zm14.228 3h-24l2-6h2.104l-1.33 4h18.45l-1.297-4h2.073l2 6zm-5-10h-14v-7h14v7z"></path></symbol></defs><defs><symbol id="mermaid-1777888020208-database" fill-rule="evenodd" clip-rule="evenodd"><path transform="scale(.5)" d="M12.258.001l.256.004.255.005.253.008.251.01.249.012.247.015.246.016.242.019.241.02.239.023.236.024.233.027.231.028.229.031.225.032.223.034.22.036.217.038.214.04.211.041.208.043.205.045.201.046.198.048.194.05.191.051.187.053.183.054.18.056.175.057.172.059.168.06.163.061.16.063.155.064.15.066.074.033.073.033.071.034.07.034.069.035.068.035.067.035.066.035.064.036.064.036.062.036.06.036.06.037.058.037.058.037.055.038.055.038.053.038.052.038.051.039.05.039.048.039.047.039.045.04.044.04.043.04.041.04.04.041.039.041.037.041.036.041.034.041.033.042.032.042.03.042.029.042.027.042.026.043.024.043.023.043.021.043.02.043.018.044.017.043.015.044.013.044.012.044.011.045.009.044.007.045.006.045.004.045.002.045.001.045v17l-.001.045-.002.045-.004.045-.006.045-.007.045-.009.044-.011.045-.012.044-.013.044-.015.044-.017.043-.018.044-.02.043-.021.043-.023.043-.024.043-.026.043-.027.042-.029.042-.03.042-.032.042-.033.042-.034.041-.036.041-.037.041-.039.041-.04.041-.041.04-.043.04-.044.04-.045.04-.047.039-.048.039-.05.039-.051.039-.052.038-.053.038-.055.038-.055.038-.058.037-.058.037-.06.037-.06.036-.062.036-.064.036-.064.036-.066.035-.067.035-.068.035-.069.035-.07.034-.071.034-.073.033-.074.033-.15.066-.155.064-.16.063-.163.061-.168.06-.172.059-.175.057-.18.056-.183.054-.187.053-.191.051-.194.05-.198.048-.201.046-.205.045-.208.043-.211.041-.214.04-.217.038-.22.036-.223.034-.225.032-.229.031-.231.028-.233.027-.236.024-.239.023-.241.02-.242.019-.246.016-.247.015-.249.012-.251.01-.253.008-.255.005-.256.004-.258.001-.258-.001-.256-.004-.255-.005-.253-.008-.251-.01-.249-.012-.247-.015-.245-.016-.243-.019-.241-.02-.238-.023-.236-.024-.234-.027-.231-.028-.228-.031-.226-.032-.223-.034-.22-.036-.217-.038-.214-.04-.211-.041-.208-.043-.204-.045-.201-.046-.198-.048-.195-.05-.19-.051-.187-.053-.184-.054-.179-.056-.176-.057-.172-.059-.167-.06-.164-.061-.159-.063-.155-.064-.151-.066-.074-.033-.072-.033-.072-.034-.07-.034-.069-.035-.068-.035-.067-.035-.066-.035-.064-.036-.063-.036-.062-.036-.061-.036-.06-.037-.058-.037-.057-.037-.056-.038-.055-.038-.053-.038-.052-.038-.051-.039-.049-.039-.049-.039-.046-.039-.046-.04-.044-.04-.043-.04-.041-.04-.04-.041-.039-.041-.037-.041-.036-.041-.034-.041-.033-.042-.032-.042-.03-.042-.029-.042-.027-.042-.026-.043-.024-.043-.023-.043-.021-.043-.02-.043-.018-.044-.017-.043-.015-.044-.013-.044-.012-.044-.011-.045-.009-.044-.007-.045-.006-.045-.004-.045-.002-.045-.001-.045v-17l.001-.045.002-.045.004-.045.006-.045.007-.045.009-.044.011-.045.012-.044.013-.044.015-.044.017-.043.018-.044.02-.043.021-.043.023-.043.024-.043.026-.043.027-.042.029-.042.03-.042.032-.042.033-.042.034-.041.036-.041.037-.041.039-.041.04-.041.041-.04.043-.04.044-.04.046-.04.046-.039.049-.039.049-.039.051-.039.052-.038.053-.038.055-.038.056-.038.057-.037.058-.037.06-.037.061-.036.062-.036.063-.036.064-.036.066-.035.067-.035.068-.035.069-.035.07-.034.072-.034.072-.033.074-.033.151-.066.155-.064.159-.063.164-.061.167-.06.172-.059.176-.057.179-.056.184-.054.187-.053.19-.051.195-.05.198-.048.201-.046.204-.045.208-.043.211-.041.214-.04.217-.038.22-.036.223-.034.226-.032.228-.031.231-.028.234-.027.236-.024.238-.023.241-.02.243-.019.245-.016.247-.015.249-.012.251-.01.253-.008.255-.005.256-.004.258-.001.258.001zm-9.258 20.499v.01l.001.021.003.021.004.022.005.021.006.022.007.022.009.023.01.022.011.023.012.023.013.023.015.023.016.024.017.023.018.024.019.024.021.024.022.025.023.024.024.025.052.049.056.05.061.051.066.051.07.051.075.051.079.052.084.052.088.052.092.052.097.052.102.051.105.052.11.052.114.051.119.051.123.051.127.05.131.05.135.05.139.048.144.049.147.047.152.047.155.047.16.045.163.045.167.043.171.043.176.041.178.041.183.039.187.039.19.037.194.035.197.035.202.033.204.031.209.03.212.029.216.027.219.025.222.024.226.021.23.02.233.018.236.016.24.015.243.012.246.01.249.008.253.005.256.004.259.001.26-.001.257-.004.254-.005.25-.008.247-.011.244-.012.241-.014.237-.016.233-.018.231-.021.226-.021.224-.024.22-.026.216-.027.212-.028.21-.031.205-.031.202-.034.198-.034.194-.036.191-.037.187-.039.183-.04.179-.04.175-.042.172-.043.168-.044.163-.045.16-.046.155-.046.152-.047.148-.048.143-.049.139-.049.136-.05.131-.05.126-.05.123-.051.118-.052.114-.051.11-.052.106-.052.101-.052.096-.052.092-.052.088-.053.083-.051.079-.052.074-.052.07-.051.065-.051.06-.051.056-.05.051-.05.023-.024.023-.025.021-.024.02-.024.019-.024.018-.024.017-.024.015-.023.014-.024.013-.023.012-.023.01-.023.01-.022.008-.022.006-.022.006-.022.004-.022.004-.021.001-.021.001-.021v-4.127l-.077.055-.08.053-.083.054-.085.053-.087.052-.09.052-.093.051-.095.05-.097.05-.1.049-.102.049-.105.048-.106.047-.109.047-.111.046-.114.045-.115.045-.118.044-.12.043-.122.042-.124.042-.126.041-.128.04-.13.04-.132.038-.134.038-.135.037-.138.037-.139.035-.142.035-.143.034-.144.033-.147.032-.148.031-.15.03-.151.03-.153.029-.154.027-.156.027-.158.026-.159.025-.161.024-.162.023-.163.022-.165.021-.166.02-.167.019-.169.018-.169.017-.171.016-.173.015-.173.014-.175.013-.175.012-.177.011-.178.01-.179.008-.179.008-.181.006-.182.005-.182.004-.184.003-.184.002h-.37l-.184-.002-.184-.003-.182-.004-.182-.005-.181-.006-.179-.008-.179-.008-.178-.01-.176-.011-.176-.012-.175-.013-.173-.014-.172-.015-.171-.016-.17-.017-.169-.018-.167-.019-.166-.02-.165-.021-.163-.022-.162-.023-.161-.024-.159-.025-.157-.026-.156-.027-.155-.027-.153-.029-.151-.03-.15-.03-.148-.031-.146-.032-.145-.033-.143-.034-.141-.035-.14-.035-.137-.037-.136-.037-.134-.038-.132-.038-.13-.04-.128-.04-.126-.041-.124-.042-.122-.042-.12-.044-.117-.043-.116-.045-.113-.045-.112-.046-.109-.047-.106-.047-.105-.048-.102-.049-.1-.049-.097-.05-.095-.05-.093-.052-.09-.051-.087-.052-.085-.053-.083-.054-.08-.054-.077-.054v4.127zm0-5.654v.011l.001.021.003.021.004.021.005.022.006.022.007.022.009.022.01.022.011.023.012.023.013.023.015.024.016.023.017.024.018.024.019.024.021.024.022.024.023.025.024.024.052.05.056.05.061.05.066.051.07.051.075.052.079.051.084.052.088.052.092.052.097.052.102.052.105.052.11.051.114.051.119.052.123.05.127.051.131.05.135.049.139.049.144.048.147.048.152.047.155.046.16.045.163.045.167.044.171.042.176.042.178.04.183.04.187.038.19.037.194.036.197.034.202.033.204.032.209.03.212.028.216.027.219.025.222.024.226.022.23.02.233.018.236.016.24.014.243.012.246.01.249.008.253.006.256.003.259.001.26-.001.257-.003.254-.006.25-.008.247-.01.244-.012.241-.015.237-.016.233-.018.231-.02.226-.022.224-.024.22-.025.216-.027.212-.029.21-.03.205-.032.202-.033.198-.035.194-.036.191-.037.187-.039.183-.039.179-.041.175-.042.172-.043.168-.044.163-.045.16-.045.155-.047.152-.047.148-.048.143-.048.139-.05.136-.049.131-.05.126-.051.123-.051.118-.051.114-.052.11-.052.106-.052.101-.052.096-.052.092-.052.088-.052.083-.052.079-.052.074-.051.07-.052.065-.051.06-.05.056-.051.051-.049.023-.025.023-.024.021-.025.02-.024.019-.024.018-.024.017-.024.015-.023.014-.023.013-.024.012-.022.01-.023.01-.023.008-.022.006-.022.006-.022.004-.021.004-.022.001-.021.001-.021v-4.139l-.077.054-.08.054-.083.054-.085.052-.087.053-.09.051-.093.051-.095.051-.097.05-.1.049-.102.049-.105.048-.106.047-.109.047-.111.046-.114.045-.115.044-.118.044-.12.044-.122.042-.124.042-.126.041-.128.04-.13.039-.132.039-.134.038-.135.037-.138.036-.139.036-.142.035-.143.033-.144.033-.147.033-.148.031-.15.03-.151.03-.153.028-.154.028-.156.027-.158.026-.159.025-.161.024-.162.023-.163.022-.165.021-.166.02-.167.019-.169.018-.169.017-.171.016-.173.015-.173.014-.175.013-.175.012-.177.011-.178.009-.179.009-.179.007-.181.007-.182.005-.182.004-.184.003-.184.002h-.37l-.184-.002-.184-.003-.182-.004-.182-.005-.181-.007-.179-.007-.179-.009-.178-.009-.176-.011-.176-.012-.175-.013-.173-.014-.172-.015-.171-.016-.17-.017-.169-.018-.167-.019-.166-.02-.165-.021-.163-.022-.162-.023-.161-.024-.159-.025-.157-.026-.156-.027-.155-.028-.153-.028-.151-.03-.15-.03-.148-.031-.146-.033-.145-.033-.143-.033-.141-.035-.14-.036-.137-.036-.136-.037-.134-.038-.132-.039-.13-.039-.128-.04-.126-.041-.124-.042-.122-.043-.12-.043-.117-.044-.116-.044-.113-.046-.112-.046-.109-.046-.106-.047-.105-.048-.102-.049-.1-.049-.097-.05-.095-.051-.093-.051-.09-.051-.087-.053-.085-.052-.083-.054-.08-.054-.077-.054v4.139zm0-5.666v.011l.001.02.003.022.004.021.005.022.006.021.007.022.009.023.01.022.011.023.012.023.013.023.015.023.016.024.017.024.018.023.019.024.021.025.022.024.023.024.024.025.052.05.056.05.061.05.066.051.07.051.075.052.079.051.084.052.088.052.092.052.097.052.102.052.105.051.11.052.114.051.119.051.123.051.127.05.131.05.135.05.139.049.144.048.147.048.152.047.155.046.16.045.163.045.167.043.171.043.176.042.178.04.183.04.187.038.19.037.194.036.197.034.202.033.204.032.209.03.212.028.216.027.219.025.222.024.226.021.23.02.233.018.236.017.24.014.243.012.246.01.249.008.253.006.256.003.259.001.26-.001.257-.003.254-.006.25-.008.247-.01.244-.013.241-.014.237-.016.233-.018.231-.02.226-.022.224-.024.22-.025.216-.027.212-.029.21-.03.205-.032.202-.033.198-.035.194-.036.191-.037.187-.039.183-.039.179-.041.175-.042.172-.043.168-.044.163-.045.16-.045.155-.047.152-.047.148-.048.143-.049.139-.049.136-.049.131-.051.126-.05.123-.051.118-.052.114-.051.11-.052.106-.052.101-.052.096-.052.092-.052.088-.052.083-.052.079-.052.074-.052.07-.051.065-.051.06-.051.056-.05.051-.049.023-.025.023-.025.021-.024.02-.024.019-.024.018-.024.017-.024.015-.023.014-.024.013-.023.012-.023.01-.022.01-.023.008-.022.006-.022.006-.022.004-.022.004-.021.001-.021.001-.021v-4.153l-.077.054-.08.054-.083.053-.085.053-.087.053-.09.051-.093.051-.095.051-.097.05-.1.049-.102.048-.105.048-.106.048-.109.046-.111.046-.114.046-.115.044-.118.044-.12.043-.122.043-.124.042-.126.041-.128.04-.13.039-.132.039-.134.038-.135.037-.138.036-.139.036-.142.034-.143.034-.144.033-.147.032-.148.032-.15.03-.151.03-.153.028-.154.028-.156.027-.158.026-.159.024-.161.024-.162.023-.163.023-.165.021-.166.02-.167.019-.169.018-.169.017-.171.016-.173.015-.173.014-.175.013-.175.012-.177.01-.178.01-.179.009-.179.007-.181.006-.182.006-.182.004-.184.003-.184.001-.185.001-.185-.001-.184-.001-.184-.003-.182-.004-.182-.006-.181-.006-.179-.007-.179-.009-.178-.01-.176-.01-.176-.012-.175-.013-.173-.014-.172-.015-.171-.016-.17-.017-.169-.018-.167-.019-.166-.02-.165-.021-.163-.023-.162-.023-.161-.024-.159-.024-.157-.026-.156-.027-.155-.028-.153-.028-.151-.03-.15-.03-.148-.032-.146-.032-.145-.033-.143-.034-.141-.034-.14-.036-.137-.036-.136-.037-.134-.038-.132-.039-.13-.039-.128-.041-.126-.041-.124-.041-.122-.043-.12-.043-.117-.044-.116-.044-.113-.046-.112-.046-.109-.046-.106-.048-.105-.048-.102-.048-.1-.05-.097-.049-.095-.051-.093-.051-.09-.052-.087-.052-.085-.053-.083-.053-.08-.054-.077-.054v4.153zm8.74-8.179l-.257.004-.254.005-.25.008-.247.011-.244.012-.241.014-.237.016-.233.018-.231.021-.226.022-.224.023-.22.026-.216.027-.212.028-.21.031-.205.032-.202.033-.198.034-.194.036-.191.038-.187.038-.183.04-.179.041-.175.042-.172.043-.168.043-.163.045-.16.046-.155.046-.152.048-.148.048-.143.048-.139.049-.136.05-.131.05-.126.051-.123.051-.118.051-.114.052-.11.052-.106.052-.101.052-.096.052-.092.052-.088.052-.083.052-.079.052-.074.051-.07.052-.065.051-.06.05-.056.05-.051.05-.023.025-.023.024-.021.024-.02.025-.019.024-.018.024-.017.023-.015.024-.014.023-.013.023-.012.023-.01.023-.01.022-.008.022-.006.023-.006.021-.004.022-.004.021-.001.021-.001.021.001.021.001.021.004.021.004.022.006.021.006.023.008.022.01.022.01.023.012.023.013.023.014.023.015.024.017.023.018.024.019.024.02.025.021.024.023.024.023.025.051.05.056.05.06.05.065.051.07.052.074.051.079.052.083.052.088.052.092.052.096.052.101.052.106.052.11.052.114.052.118.051.123.051.126.051.131.05.136.05.139.049.143.048.148.048.152.048.155.046.16.046.163.045.168.043.172.043.175.042.179.041.183.04.187.038.191.038.194.036.198.034.202.033.205.032.21.031.212.028.216.027.22.026.224.023.226.022.231.021.233.018.237.016.241.014.244.012.247.011.25.008.254.005.257.004.26.001.26-.001.257-.004.254-.005.25-.008.247-.011.244-.012.241-.014.237-.016.233-.018.231-.021.226-.022.224-.023.22-.026.216-.027.212-.028.21-.031.205-.032.202-.033.198-.034.194-.036.191-.038.187-.038.183-.04.179-.041.175-.042.172-.043.168-.043.163-.045.16-.046.155-.046.152-.048.148-.048.143-.048.139-.049.136-.05.131-.05.126-.051.123-.051.118-.051.114-.052.11-.052.106-.052.101-.052.096-.052.092-.052.088-.052.083-.052.079-.052.074-.051.07-.052.065-.051.06-.05.056-.05.051-.05.023-.025.023-.024.021-.024.02-.025.019-.024.018-.024.017-.023.015-.024.014-.023.013-.023.012-.023.01-.023.01-.022.008-.022.006-.023.006-.021.004-.022.004-.021.001-.021.001-.021-.001-.021-.001-.021-.004-.021-.004-.022-.006-.021-.006-.023-.008-.022-.01-.022-.01-.023-.012-.023-.013-.023-.014-.023-.015-.024-.017-.023-.018-.024-.019-.024-.02-.025-.021-.024-.023-.024-.023-.025-.051-.05-.056-.05-.06-.05-.065-.051-.07-.052-.074-.051-.079-.052-.083-.052-.088-.052-.092-.052-.096-.052-.101-.052-.106-.052-.11-.052-.114-.052-.118-.051-.123-.051-.126-.051-.131-.05-.136-.05-.139-.049-.143-.048-.148-.048-.152-.048-.155-.046-.16-.046-.163-.045-.168-.043-.172-.043-.175-.042-.179-.041-.183-.04-.187-.038-.191-.038-.194-.036-.198-.034-.202-.033-.205-.032-.21-.031-.212-.028-.216-.027-.22-.026-.224-.023-.226-.022-.231-.021-.233-.018-.237-.016-.241-.014-.244-.012-.247-.011-.25-.008-.254-.005-.257-.004-.26-.001-.26.001z"></path></symbol></defs><defs><symbol id="mermaid-1777888020208-clock" width="24" height="24"><path transform="scale(.5)" d="M12 2c5.514 0 10 4.486 10 10s-4.486 10-10 10-10-4.486-10-10 4.486-10 10-10zm0-2c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm5.848 12.459c.202.038.202.333.001.372-1.907.361-6.045 1.111-6.547 1.111-.719 0-1.301-.582-1.301-1.301 0-.512.77-5.447 1.125-7.445.034-.192.312-.181.343.014l.985 6.238 5.394 1.011z"></path></symbol></defs><defs><marker id="mermaid-1777888020208-arrowhead" refX="7.9" refY="5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto-start-reverse"><path d="M -1 0 L 10 5 L 0 10 z"></path></marker></defs><defs><marker id="mermaid-1777888020208-crosshead" markerWidth="15" markerHeight="8" orient="auto" refX="4" refY="4.5"><path fill="none" stroke="#000000" stroke-width="1pt" d="M 1,2 L 6,7 M 6,2 L 1,7" style="stroke-dasharray: 0, 0;"></path></marker></defs><defs><marker id="mermaid-1777888020208-filled-head" refX="15.5" refY="7" markerWidth="20" markerHeight="28" orient="auto"><path d="M 18,7 L9,13 L14,7 L9,1 Z"></path></marker></defs><defs><marker id="mermaid-1777888020208-sequencenumber" refX="15" refY="15" markerWidth="60" markerHeight="40" orient="auto"><circle cx="15" cy="15" r="6"></circle></marker></defs><defs><marker id="mermaid-1777888020208-solidTopArrowHead" refX="7.9" refY="7.25" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto-start-reverse"><path d="M 0 0 L 10 8 L 0 8 z"></path></marker></defs><defs><marker id="mermaid-1777888020208-solidBottomArrowHead" refX="7.9" refY="0.75" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto-start-reverse"><path d="M 0 0 L 10 0 L 0 8 z"></path></marker></defs><defs><marker id="mermaid-1777888020208-stickTopArrowHead" refX="7.5" refY="7" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto-start-reverse"><path d="M 0 0 L 7 7" stroke="black" stroke-width="1.5" fill="none"></path></marker></defs><defs><marker id="mermaid-1777888020208-stickBottomArrowHead" refX="7.5" refY="0" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto-start-reverse"><path d="M 0 7 L 7 0" stroke="black" stroke-width="1.5" fill="none"></path></marker></defs><g data-et="note" data-id="i1"><rect x="196.5" y="121" fill="#EDF2AE" stroke="#666" width="169" height="40" class="note"></rect><text x="281" y="126" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" class="noteText" dy="1em" style="font-size: 16px; font-weight: 400;"><tspan x="281">Regex::new — BUILD</tspan></text></g><g data-et="note" data-id="i2"><rect x="189.5" y="171" fill="#EDF2AE" stroke="#666" width="183" height="40" class="note"></rect><text x="281" y="176" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" class="noteText" dy="1em" style="font-size: 16px; font-weight: 400;"><tspan x="281">is_match / drop — FREE</tspan></text></g><g data-et="note" data-id="i5"><rect x="177" y="313" fill="#EDF2AE" stroke="#666" width="208" height="40" class="note"></rect><text x="281" y="318" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" class="noteText" dy="1em" style="font-size: 16px; font-weight: 400;"><tspan x="281">Regex::new — BUILD again</tspan></text></g><g data-et="note" data-id="i6"><rect x="189.5" y="363" fill="#EDF2AE" stroke="#666" width="183" height="40" class="note"></rect><text x="281" y="368" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" class="noteText" dy="1em" style="font-size: 16px; font-weight: 400;"><tspan x="281">is_match / drop — FREE</tspan></text></g><g data-et="note" data-id="i9"><rect x="169" y="505" fill="#EDF2AE" stroke="#666" width="224" height="40" class="note"></rect><text x="281" y="510" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" class="noteText" dy="1em" style="font-size: 16px; font-weight: 400;"><tspan x="281">Regex::new — BUILD again…</tspan></text></g><text x="177" y="80" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" class="messageText" dy="1em" style="font-size: 16px; font-weight: 400;">isMatch("a+", "aaa")</text><line x1="76" y1="111" x2="277" y2="111" class="messageLine0" data-et="message" data-id="i0" data-from="J" data-to="R" stroke-width="2" stroke="none" marker-end="url(#mermaid-1777888020208-arrowhead)" style="fill: none;"></line><text x="180" y="226" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" class="messageText" dy="1em" style="font-size: 16px; font-weight: 400;">true</text><line x1="280" y1="257" x2="79" y2="257" class="messageLine1" data-et="message" data-id="i3" data-from="R" data-to="J" stroke-width="2" stroke="none" marker-end="url(#mermaid-1777888020208-arrowhead)" style="stroke-dasharray: 3, 3; fill: none;"></line><text x="177" y="272" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" class="messageText" dy="1em" style="font-size: 16px; font-weight: 400;">isMatch("a+", "bbb")</text><line x1="76" y1="303" x2="277" y2="303" class="messageLine0" data-et="message" data-id="i4" data-from="J" data-to="R" stroke-width="2" stroke="none" marker-end="url(#mermaid-1777888020208-arrowhead)" style="fill: none;"></line><text x="180" y="418" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" class="messageText" dy="1em" style="font-size: 16px; font-weight: 400;">false</text><line x1="280" y1="449" x2="79" y2="449" class="messageLine1" data-et="message" data-id="i7" data-from="R" data-to="J" stroke-width="2" stroke="none" marker-end="url(#mermaid-1777888020208-arrowhead)" style="stroke-dasharray: 3, 3; fill: none;"></line><text x="177" y="464" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" class="messageText" dy="1em" style="font-size: 16px; font-weight: 400;">isMatch("a+", "ccc")</text><line x1="76" y1="495" x2="277" y2="495" class="messageLine0" data-et="message" data-id="i8" data-from="J" data-to="R" stroke-width="2" stroke="none" marker-end="url(#mermaid-1777888020208-arrowhead)" style="fill: none;"></line></svg></div>
+    </div>
+    <div class="ps-arrow">→</div>
+    <div class="ps-side">
+      <p class="ps-label" style="color:#2ecc71;">✓ Solution: compile once, pass a handle</p>
+      <div class="mermaid-static" data-source="
+sequenceDiagram
+    participant J as Java
+    participant R as Rust heap
+    J-&gt;&gt;R: compile(&quot;a+&quot;)
+    Note over R: Regex::new / Box::into_raw
+    R--&gt;&gt;J: ptr = 0xAB
+    J-&gt;&gt;R: isMatch(ptr, &quot;aaa&quot;)
+    Note over R: deref ptr — reuse
+    R--&gt;&gt;J: true
+    J-&gt;&gt;R: isMatch(ptr, &quot;bbb&quot;)
+    R--&gt;&gt;J: false
+    J-&gt;&gt;R: destroy(ptr)
+    Note over R: Box::from_raw — FREE
+      "><svg id="mermaid-1777888020216" width="100%" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="max-width: 475.5px;" viewBox="-50 -10 475.5 643" role="graphics-document document"><g><rect x="200" y="557" fill="#eaeaea" stroke="#666" width="150" height="65" name="R" rx="3" ry="3" class="actor actor-bottom"></rect><text x="275" y="589.5" dominant-baseline="central" alignment-baseline="central" class="actor actor-box" style="text-anchor: middle; font-size: 16px; font-weight: 400;"><tspan x="275" dy="0">Rust heap</tspan></text></g><g><rect x="0" y="557" fill="#eaeaea" stroke="#666" width="150" height="65" name="J" rx="3" ry="3" class="actor actor-bottom"></rect><text x="75" y="589.5" dominant-baseline="central" alignment-baseline="central" class="actor actor-box" style="text-anchor: middle; font-size: 16px; font-weight: 400;"><tspan x="75" dy="0">Java</tspan></text></g><g><line id="actor5" x1="275" y1="65" x2="275" y2="557" class="actor-line 200" stroke-width="0.5px" stroke="#999" name="R" data-et="life-line" data-id="R"></line><g id="root-5" data-et="participant" data-type="participant" data-id="R"><rect x="200" y="0" fill="#eaeaea" stroke="#666" width="150" height="65" name="R" rx="3" ry="3" class="actor actor-top"></rect><text x="275" y="32.5" dominant-baseline="central" alignment-baseline="central" class="actor actor-box" style="text-anchor: middle; font-size: 16px; font-weight: 400;"><tspan x="275" dy="0">Rust heap</tspan></text></g></g><g><line id="actor4" x1="75" y1="65" x2="75" y2="557" class="actor-line 200" stroke-width="0.5px" stroke="#999" name="J" data-et="life-line" data-id="J"></line><g id="root-4" data-et="participant" data-type="participant" data-id="J"><rect x="0" y="0" fill="#eaeaea" stroke="#666" width="150" height="65" name="J" rx="3" ry="3" class="actor actor-top"></rect><text x="75" y="32.5" dominant-baseline="central" alignment-baseline="central" class="actor actor-box" style="text-anchor: middle; font-size: 16px; font-weight: 400;"><tspan x="75" dy="0">Java</tspan></text></g></g><style>#mermaid-1777888020216{font-family:Source Sans Pro,Segoe UI,sans-serif;font-size:18px;fill:#ffffff;}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#mermaid-1777888020216 .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#mermaid-1777888020216 .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#mermaid-1777888020216 .error-icon{fill:#2d2d2d;}#mermaid-1777888020216 .error-text{fill:#d2d2d2;stroke:#d2d2d2;}#mermaid-1777888020216 .edge-thickness-normal{stroke-width:1px;}#mermaid-1777888020216 .edge-thickness-thick{stroke-width:3.5px;}#mermaid-1777888020216 .edge-pattern-solid{stroke-dasharray:0;}#mermaid-1777888020216 .edge-thickness-invisible{stroke-width:0;fill:none;}#mermaid-1777888020216 .edge-pattern-dashed{stroke-dasharray:3;}#mermaid-1777888020216 .edge-pattern-dotted{stroke-dasharray:2;}#mermaid-1777888020216 .marker{fill:#e6a020;stroke:#e6a020;}#mermaid-1777888020216 .marker.cross{stroke:#e6a020;}#mermaid-1777888020216 svg{font-family:Source Sans Pro,Segoe UI,sans-serif;font-size:18px;}#mermaid-1777888020216 p{margin:0;}#mermaid-1777888020216 .actor{stroke:#7aa6d6;fill:#3d4a5e;stroke-width:1;}#mermaid-1777888020216 rect.actor.outer-path[data-look="neo"]{filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#mermaid-1777888020216 rect.note[data-look="neo"]{stroke:#e6a020;fill:#4a3a1f;filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#mermaid-1777888020216 text.actor&gt;tspan{fill:#ffffff;stroke:none;}#mermaid-1777888020216 .actor-line{stroke:#3a3a3a;}#mermaid-1777888020216 .innerArc{stroke-width:1.5;stroke-dasharray:none;}#mermaid-1777888020216 .messageLine0{stroke-width:1.5;stroke-dasharray:none;stroke:#e0e0e0;}#mermaid-1777888020216 .messageLine1{stroke-width:1.5;stroke-dasharray:2,2;stroke:#e0e0e0;}#mermaid-1777888020216 [id$="-arrowhead"] path{fill:#e0e0e0;stroke:#e0e0e0;}#mermaid-1777888020216 .sequenceNumber{fill:#1a1a1a;}#mermaid-1777888020216 [id$="-sequencenumber"]{fill:#e0e0e0;}#mermaid-1777888020216 [id$="-crosshead"] path{fill:#e0e0e0;stroke:#e0e0e0;}#mermaid-1777888020216 .messageText{fill:#e0e0e0;stroke:none;}#mermaid-1777888020216 .labelBox{stroke:#7aa6d6;fill:#3d4a5e;filter:none;}#mermaid-1777888020216 .labelText,#mermaid-1777888020216 .labelText&gt;tspan{fill:#ffffff;stroke:none;}#mermaid-1777888020216 .loopText,#mermaid-1777888020216 .loopText&gt;tspan{fill:#e0e0e0;stroke:none;}#mermaid-1777888020216 .loopLine{stroke-width:2px;stroke-dasharray:2,2;stroke:#7aa6d6;fill:#7aa6d6;}#mermaid-1777888020216 .note{stroke:#e6a020;fill:#4a3a1f;}#mermaid-1777888020216 .noteText,#mermaid-1777888020216 .noteText&gt;tspan{fill:#ffe9b4;stroke:none;font-weight:normal;}#mermaid-1777888020216 .activation0{fill:#5a5a5a;stroke:#aaa;}#mermaid-1777888020216 .activation1{fill:#5a5a5a;stroke:#aaa;}#mermaid-1777888020216 .activation2{fill:#5a5a5a;stroke:#aaa;}#mermaid-1777888020216 .actorPopupMenu{position:absolute;}#mermaid-1777888020216 .actorPopupMenuPanel{position:absolute;fill:#3d4a5e;box-shadow:0px 8px 16px 0px rgba(0,0,0,0.2);filter:drop-shadow(3px 5px 2px rgb(0 0 0 / 0.4));}#mermaid-1777888020216 .actor-man circle,#mermaid-1777888020216 line{fill:#3d4a5e;stroke-width:2px;}#mermaid-1777888020216 g rect.rect{filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));stroke:#7aa6d6;}#mermaid-1777888020216 .node .neo-node{stroke:#7aa6d6;}#mermaid-1777888020216 [data-look="neo"].node rect,#mermaid-1777888020216 [data-look="neo"].cluster rect,#mermaid-1777888020216 [data-look="neo"].node polygon{stroke:url(#mermaid-1777888020216-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#mermaid-1777888020216 [data-look="neo"].node path{stroke:url(#mermaid-1777888020216-gradient);stroke-width:1px;}#mermaid-1777888020216 [data-look="neo"].node .outer-path{filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#mermaid-1777888020216 [data-look="neo"].node .neo-line path{stroke:#7aa6d6;filter:none;}#mermaid-1777888020216 [data-look="neo"].node circle{stroke:url(#mermaid-1777888020216-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#mermaid-1777888020216 [data-look="neo"].node circle .state-start{fill:#000000;}#mermaid-1777888020216 [data-look="neo"].icon-shape .icon{fill:url(#mermaid-1777888020216-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#mermaid-1777888020216 [data-look="neo"].icon-shape .icon-neo path{stroke:url(#mermaid-1777888020216-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#mermaid-1777888020216 :root{--mermaid-font-family:"trebuchet ms",verdana,arial,sans-serif;}</style><g></g><defs><symbol id="mermaid-1777888020216-computer" width="24" height="24"><path transform="scale(.5)" d="M2 2v13h20v-13h-20zm18 11h-16v-9h16v9zm-10.228 6l.466-1h3.524l.467 1h-4.457zm14.228 3h-24l2-6h2.104l-1.33 4h18.45l-1.297-4h2.073l2 6zm-5-10h-14v-7h14v7z"></path></symbol></defs><defs><symbol id="mermaid-1777888020216-database" fill-rule="evenodd" clip-rule="evenodd"><path transform="scale(.5)" d="M12.258.001l.256.004.255.005.253.008.251.01.249.012.247.015.246.016.242.019.241.02.239.023.236.024.233.027.231.028.229.031.225.032.223.034.22.036.217.038.214.04.211.041.208.043.205.045.201.046.198.048.194.05.191.051.187.053.183.054.18.056.175.057.172.059.168.06.163.061.16.063.155.064.15.066.074.033.073.033.071.034.07.034.069.035.068.035.067.035.066.035.064.036.064.036.062.036.06.036.06.037.058.037.058.037.055.038.055.038.053.038.052.038.051.039.05.039.048.039.047.039.045.04.044.04.043.04.041.04.04.041.039.041.037.041.036.041.034.041.033.042.032.042.03.042.029.042.027.042.026.043.024.043.023.043.021.043.02.043.018.044.017.043.015.044.013.044.012.044.011.045.009.044.007.045.006.045.004.045.002.045.001.045v17l-.001.045-.002.045-.004.045-.006.045-.007.045-.009.044-.011.045-.012.044-.013.044-.015.044-.017.043-.018.044-.02.043-.021.043-.023.043-.024.043-.026.043-.027.042-.029.042-.03.042-.032.042-.033.042-.034.041-.036.041-.037.041-.039.041-.04.041-.041.04-.043.04-.044.04-.045.04-.047.039-.048.039-.05.039-.051.039-.052.038-.053.038-.055.038-.055.038-.058.037-.058.037-.06.037-.06.036-.062.036-.064.036-.064.036-.066.035-.067.035-.068.035-.069.035-.07.034-.071.034-.073.033-.074.033-.15.066-.155.064-.16.063-.163.061-.168.06-.172.059-.175.057-.18.056-.183.054-.187.053-.191.051-.194.05-.198.048-.201.046-.205.045-.208.043-.211.041-.214.04-.217.038-.22.036-.223.034-.225.032-.229.031-.231.028-.233.027-.236.024-.239.023-.241.02-.242.019-.246.016-.247.015-.249.012-.251.01-.253.008-.255.005-.256.004-.258.001-.258-.001-.256-.004-.255-.005-.253-.008-.251-.01-.249-.012-.247-.015-.245-.016-.243-.019-.241-.02-.238-.023-.236-.024-.234-.027-.231-.028-.228-.031-.226-.032-.223-.034-.22-.036-.217-.038-.214-.04-.211-.041-.208-.043-.204-.045-.201-.046-.198-.048-.195-.05-.19-.051-.187-.053-.184-.054-.179-.056-.176-.057-.172-.059-.167-.06-.164-.061-.159-.063-.155-.064-.151-.066-.074-.033-.072-.033-.072-.034-.07-.034-.069-.035-.068-.035-.067-.035-.066-.035-.064-.036-.063-.036-.062-.036-.061-.036-.06-.037-.058-.037-.057-.037-.056-.038-.055-.038-.053-.038-.052-.038-.051-.039-.049-.039-.049-.039-.046-.039-.046-.04-.044-.04-.043-.04-.041-.04-.04-.041-.039-.041-.037-.041-.036-.041-.034-.041-.033-.042-.032-.042-.03-.042-.029-.042-.027-.042-.026-.043-.024-.043-.023-.043-.021-.043-.02-.043-.018-.044-.017-.043-.015-.044-.013-.044-.012-.044-.011-.045-.009-.044-.007-.045-.006-.045-.004-.045-.002-.045-.001-.045v-17l.001-.045.002-.045.004-.045.006-.045.007-.045.009-.044.011-.045.012-.044.013-.044.015-.044.017-.043.018-.044.02-.043.021-.043.023-.043.024-.043.026-.043.027-.042.029-.042.03-.042.032-.042.033-.042.034-.041.036-.041.037-.041.039-.041.04-.041.041-.04.043-.04.044-.04.046-.04.046-.039.049-.039.049-.039.051-.039.052-.038.053-.038.055-.038.056-.038.057-.037.058-.037.06-.037.061-.036.062-.036.063-.036.064-.036.066-.035.067-.035.068-.035.069-.035.07-.034.072-.034.072-.033.074-.033.151-.066.155-.064.159-.063.164-.061.167-.06.172-.059.176-.057.179-.056.184-.054.187-.053.19-.051.195-.05.198-.048.201-.046.204-.045.208-.043.211-.041.214-.04.217-.038.22-.036.223-.034.226-.032.228-.031.231-.028.234-.027.236-.024.238-.023.241-.02.243-.019.245-.016.247-.015.249-.012.251-.01.253-.008.255-.005.256-.004.258-.001.258.001zm-9.258 20.499v.01l.001.021.003.021.004.022.005.021.006.022.007.022.009.023.01.022.011.023.012.023.013.023.015.023.016.024.017.023.018.024.019.024.021.024.022.025.023.024.024.025.052.049.056.05.061.051.066.051.07.051.075.051.079.052.084.052.088.052.092.052.097.052.102.051.105.052.11.052.114.051.119.051.123.051.127.05.131.05.135.05.139.048.144.049.147.047.152.047.155.047.16.045.163.045.167.043.171.043.176.041.178.041.183.039.187.039.19.037.194.035.197.035.202.033.204.031.209.03.212.029.216.027.219.025.222.024.226.021.23.02.233.018.236.016.24.015.243.012.246.01.249.008.253.005.256.004.259.001.26-.001.257-.004.254-.005.25-.008.247-.011.244-.012.241-.014.237-.016.233-.018.231-.021.226-.021.224-.024.22-.026.216-.027.212-.028.21-.031.205-.031.202-.034.198-.034.194-.036.191-.037.187-.039.183-.04.179-.04.175-.042.172-.043.168-.044.163-.045.16-.046.155-.046.152-.047.148-.048.143-.049.139-.049.136-.05.131-.05.126-.05.123-.051.118-.052.114-.051.11-.052.106-.052.101-.052.096-.052.092-.052.088-.053.083-.051.079-.052.074-.052.07-.051.065-.051.06-.051.056-.05.051-.05.023-.024.023-.025.021-.024.02-.024.019-.024.018-.024.017-.024.015-.023.014-.024.013-.023.012-.023.01-.023.01-.022.008-.022.006-.022.006-.022.004-.022.004-.021.001-.021.001-.021v-4.127l-.077.055-.08.053-.083.054-.085.053-.087.052-.09.052-.093.051-.095.05-.097.05-.1.049-.102.049-.105.048-.106.047-.109.047-.111.046-.114.045-.115.045-.118.044-.12.043-.122.042-.124.042-.126.041-.128.04-.13.04-.132.038-.134.038-.135.037-.138.037-.139.035-.142.035-.143.034-.144.033-.147.032-.148.031-.15.03-.151.03-.153.029-.154.027-.156.027-.158.026-.159.025-.161.024-.162.023-.163.022-.165.021-.166.02-.167.019-.169.018-.169.017-.171.016-.173.015-.173.014-.175.013-.175.012-.177.011-.178.01-.179.008-.179.008-.181.006-.182.005-.182.004-.184.003-.184.002h-.37l-.184-.002-.184-.003-.182-.004-.182-.005-.181-.006-.179-.008-.179-.008-.178-.01-.176-.011-.176-.012-.175-.013-.173-.014-.172-.015-.171-.016-.17-.017-.169-.018-.167-.019-.166-.02-.165-.021-.163-.022-.162-.023-.161-.024-.159-.025-.157-.026-.156-.027-.155-.027-.153-.029-.151-.03-.15-.03-.148-.031-.146-.032-.145-.033-.143-.034-.141-.035-.14-.035-.137-.037-.136-.037-.134-.038-.132-.038-.13-.04-.128-.04-.126-.041-.124-.042-.122-.042-.12-.044-.117-.043-.116-.045-.113-.045-.112-.046-.109-.047-.106-.047-.105-.048-.102-.049-.1-.049-.097-.05-.095-.05-.093-.052-.09-.051-.087-.052-.085-.053-.083-.054-.08-.054-.077-.054v4.127zm0-5.654v.011l.001.021.003.021.004.021.005.022.006.022.007.022.009.022.01.022.011.023.012.023.013.023.015.024.016.023.017.024.018.024.019.024.021.024.022.024.023.025.024.024.052.05.056.05.061.05.066.051.07.051.075.052.079.051.084.052.088.052.092.052.097.052.102.052.105.052.11.051.114.051.119.052.123.05.127.051.131.05.135.049.139.049.144.048.147.048.152.047.155.046.16.045.163.045.167.044.171.042.176.042.178.04.183.04.187.038.19.037.194.036.197.034.202.033.204.032.209.03.212.028.216.027.219.025.222.024.226.022.23.02.233.018.236.016.24.014.243.012.246.01.249.008.253.006.256.003.259.001.26-.001.257-.003.254-.006.25-.008.247-.01.244-.012.241-.015.237-.016.233-.018.231-.02.226-.022.224-.024.22-.025.216-.027.212-.029.21-.03.205-.032.202-.033.198-.035.194-.036.191-.037.187-.039.183-.039.179-.041.175-.042.172-.043.168-.044.163-.045.16-.045.155-.047.152-.047.148-.048.143-.048.139-.05.136-.049.131-.05.126-.051.123-.051.118-.051.114-.052.11-.052.106-.052.101-.052.096-.052.092-.052.088-.052.083-.052.079-.052.074-.051.07-.052.065-.051.06-.05.056-.051.051-.049.023-.025.023-.024.021-.025.02-.024.019-.024.018-.024.017-.024.015-.023.014-.023.013-.024.012-.022.01-.023.01-.023.008-.022.006-.022.006-.022.004-.021.004-.022.001-.021.001-.021v-4.139l-.077.054-.08.054-.083.054-.085.052-.087.053-.09.051-.093.051-.095.051-.097.05-.1.049-.102.049-.105.048-.106.047-.109.047-.111.046-.114.045-.115.044-.118.044-.12.044-.122.042-.124.042-.126.041-.128.04-.13.039-.132.039-.134.038-.135.037-.138.036-.139.036-.142.035-.143.033-.144.033-.147.033-.148.031-.15.03-.151.03-.153.028-.154.028-.156.027-.158.026-.159.025-.161.024-.162.023-.163.022-.165.021-.166.02-.167.019-.169.018-.169.017-.171.016-.173.015-.173.014-.175.013-.175.012-.177.011-.178.009-.179.009-.179.007-.181.007-.182.005-.182.004-.184.003-.184.002h-.37l-.184-.002-.184-.003-.182-.004-.182-.005-.181-.007-.179-.007-.179-.009-.178-.009-.176-.011-.176-.012-.175-.013-.173-.014-.172-.015-.171-.016-.17-.017-.169-.018-.167-.019-.166-.02-.165-.021-.163-.022-.162-.023-.161-.024-.159-.025-.157-.026-.156-.027-.155-.028-.153-.028-.151-.03-.15-.03-.148-.031-.146-.033-.145-.033-.143-.033-.141-.035-.14-.036-.137-.036-.136-.037-.134-.038-.132-.039-.13-.039-.128-.04-.126-.041-.124-.042-.122-.043-.12-.043-.117-.044-.116-.044-.113-.046-.112-.046-.109-.046-.106-.047-.105-.048-.102-.049-.1-.049-.097-.05-.095-.051-.093-.051-.09-.051-.087-.053-.085-.052-.083-.054-.08-.054-.077-.054v4.139zm0-5.666v.011l.001.02.003.022.004.021.005.022.006.021.007.022.009.023.01.022.011.023.012.023.013.023.015.023.016.024.017.024.018.023.019.024.021.025.022.024.023.024.024.025.052.05.056.05.061.05.066.051.07.051.075.052.079.051.084.052.088.052.092.052.097.052.102.052.105.051.11.052.114.051.119.051.123.051.127.05.131.05.135.05.139.049.144.048.147.048.152.047.155.046.16.045.163.045.167.043.171.043.176.042.178.04.183.04.187.038.19.037.194.036.197.034.202.033.204.032.209.03.212.028.216.027.219.025.222.024.226.021.23.02.233.018.236.017.24.014.243.012.246.01.249.008.253.006.256.003.259.001.26-.001.257-.003.254-.006.25-.008.247-.01.244-.013.241-.014.237-.016.233-.018.231-.02.226-.022.224-.024.22-.025.216-.027.212-.029.21-.03.205-.032.202-.033.198-.035.194-.036.191-.037.187-.039.183-.039.179-.041.175-.042.172-.043.168-.044.163-.045.16-.045.155-.047.152-.047.148-.048.143-.049.139-.049.136-.049.131-.051.126-.05.123-.051.118-.052.114-.051.11-.052.106-.052.101-.052.096-.052.092-.052.088-.052.083-.052.079-.052.074-.052.07-.051.065-.051.06-.051.056-.05.051-.049.023-.025.023-.025.021-.024.02-.024.019-.024.018-.024.017-.024.015-.023.014-.024.013-.023.012-.023.01-.022.01-.023.008-.022.006-.022.006-.022.004-.022.004-.021.001-.021.001-.021v-4.153l-.077.054-.08.054-.083.053-.085.053-.087.053-.09.051-.093.051-.095.051-.097.05-.1.049-.102.048-.105.048-.106.048-.109.046-.111.046-.114.046-.115.044-.118.044-.12.043-.122.043-.124.042-.126.041-.128.04-.13.039-.132.039-.134.038-.135.037-.138.036-.139.036-.142.034-.143.034-.144.033-.147.032-.148.032-.15.03-.151.03-.153.028-.154.028-.156.027-.158.026-.159.024-.161.024-.162.023-.163.023-.165.021-.166.02-.167.019-.169.018-.169.017-.171.016-.173.015-.173.014-.175.013-.175.012-.177.01-.178.01-.179.009-.179.007-.181.006-.182.006-.182.004-.184.003-.184.001-.185.001-.185-.001-.184-.001-.184-.003-.182-.004-.182-.006-.181-.006-.179-.007-.179-.009-.178-.01-.176-.01-.176-.012-.175-.013-.173-.014-.172-.015-.171-.016-.17-.017-.169-.018-.167-.019-.166-.02-.165-.021-.163-.023-.162-.023-.161-.024-.159-.024-.157-.026-.156-.027-.155-.028-.153-.028-.151-.03-.15-.03-.148-.032-.146-.032-.145-.033-.143-.034-.141-.034-.14-.036-.137-.036-.136-.037-.134-.038-.132-.039-.13-.039-.128-.041-.126-.041-.124-.041-.122-.043-.12-.043-.117-.044-.116-.044-.113-.046-.112-.046-.109-.046-.106-.048-.105-.048-.102-.048-.1-.05-.097-.049-.095-.051-.093-.051-.09-.052-.087-.052-.085-.053-.083-.053-.08-.054-.077-.054v4.153zm8.74-8.179l-.257.004-.254.005-.25.008-.247.011-.244.012-.241.014-.237.016-.233.018-.231.021-.226.022-.224.023-.22.026-.216.027-.212.028-.21.031-.205.032-.202.033-.198.034-.194.036-.191.038-.187.038-.183.04-.179.041-.175.042-.172.043-.168.043-.163.045-.16.046-.155.046-.152.048-.148.048-.143.048-.139.049-.136.05-.131.05-.126.051-.123.051-.118.051-.114.052-.11.052-.106.052-.101.052-.096.052-.092.052-.088.052-.083.052-.079.052-.074.051-.07.052-.065.051-.06.05-.056.05-.051.05-.023.025-.023.024-.021.024-.02.025-.019.024-.018.024-.017.023-.015.024-.014.023-.013.023-.012.023-.01.023-.01.022-.008.022-.006.023-.006.021-.004.022-.004.021-.001.021-.001.021.001.021.001.021.004.021.004.022.006.021.006.023.008.022.01.022.01.023.012.023.013.023.014.023.015.024.017.023.018.024.019.024.02.025.021.024.023.024.023.025.051.05.056.05.06.05.065.051.07.052.074.051.079.052.083.052.088.052.092.052.096.052.101.052.106.052.11.052.114.052.118.051.123.051.126.051.131.05.136.05.139.049.143.048.148.048.152.048.155.046.16.046.163.045.168.043.172.043.175.042.179.041.183.04.187.038.191.038.194.036.198.034.202.033.205.032.21.031.212.028.216.027.22.026.224.023.226.022.231.021.233.018.237.016.241.014.244.012.247.011.25.008.254.005.257.004.26.001.26-.001.257-.004.254-.005.25-.008.247-.011.244-.012.241-.014.237-.016.233-.018.231-.021.226-.022.224-.023.22-.026.216-.027.212-.028.21-.031.205-.032.202-.033.198-.034.194-.036.191-.038.187-.038.183-.04.179-.041.175-.042.172-.043.168-.043.163-.045.16-.046.155-.046.152-.048.148-.048.143-.048.139-.049.136-.05.131-.05.126-.051.123-.051.118-.051.114-.052.11-.052.106-.052.101-.052.096-.052.092-.052.088-.052.083-.052.079-.052.074-.051.07-.052.065-.051.06-.05.056-.05.051-.05.023-.025.023-.024.021-.024.02-.025.019-.024.018-.024.017-.023.015-.024.014-.023.013-.023.012-.023.01-.023.01-.022.008-.022.006-.023.006-.021.004-.022.004-.021.001-.021.001-.021-.001-.021-.001-.021-.004-.021-.004-.022-.006-.021-.006-.023-.008-.022-.01-.022-.01-.023-.012-.023-.013-.023-.014-.023-.015-.024-.017-.023-.018-.024-.019-.024-.02-.025-.021-.024-.023-.024-.023-.025-.051-.05-.056-.05-.06-.05-.065-.051-.07-.052-.074-.051-.079-.052-.083-.052-.088-.052-.092-.052-.096-.052-.101-.052-.106-.052-.11-.052-.114-.052-.118-.051-.123-.051-.126-.051-.131-.05-.136-.05-.139-.049-.143-.048-.148-.048-.152-.048-.155-.046-.16-.046-.163-.045-.168-.043-.172-.043-.175-.042-.179-.041-.183-.04-.187-.038-.191-.038-.194-.036-.198-.034-.202-.033-.205-.032-.21-.031-.212-.028-.216-.027-.22-.026-.224-.023-.226-.022-.231-.021-.233-.018-.237-.016-.241-.014-.244-.012-.247-.011-.25-.008-.254-.005-.257-.004-.26-.001-.26.001z"></path></symbol></defs><defs><symbol id="mermaid-1777888020216-clock" width="24" height="24"><path transform="scale(.5)" d="M12 2c5.514 0 10 4.486 10 10s-4.486 10-10 10-10-4.486-10-10 4.486-10 10-10zm0-2c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm5.848 12.459c.202.038.202.333.001.372-1.907.361-6.045 1.111-6.547 1.111-.719 0-1.301-.582-1.301-1.301 0-.512.77-5.447 1.125-7.445.034-.192.312-.181.343.014l.985 6.238 5.394 1.011z"></path></symbol></defs><defs><marker id="mermaid-1777888020216-arrowhead" refX="7.9" refY="5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto-start-reverse"><path d="M -1 0 L 10 5 L 0 10 z"></path></marker></defs><defs><marker id="mermaid-1777888020216-crosshead" markerWidth="15" markerHeight="8" orient="auto" refX="4" refY="4.5"><path fill="none" stroke="#000000" stroke-width="1pt" d="M 1,2 L 6,7 M 6,2 L 1,7" style="stroke-dasharray: 0, 0;"></path></marker></defs><defs><marker id="mermaid-1777888020216-filled-head" refX="15.5" refY="7" markerWidth="20" markerHeight="28" orient="auto"><path d="M 18,7 L9,13 L14,7 L9,1 Z"></path></marker></defs><defs><marker id="mermaid-1777888020216-sequencenumber" refX="15" refY="15" markerWidth="60" markerHeight="40" orient="auto"><circle cx="15" cy="15" r="6"></circle></marker></defs><defs><marker id="mermaid-1777888020216-solidTopArrowHead" refX="7.9" refY="7.25" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto-start-reverse"><path d="M 0 0 L 10 8 L 0 8 z"></path></marker></defs><defs><marker id="mermaid-1777888020216-solidBottomArrowHead" refX="7.9" refY="0.75" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto-start-reverse"><path d="M 0 0 L 10 0 L 0 8 z"></path></marker></defs><defs><marker id="mermaid-1777888020216-stickTopArrowHead" refX="7.5" refY="7" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto-start-reverse"><path d="M 0 0 L 7 7" stroke="black" stroke-width="1.5" fill="none"></path></marker></defs><defs><marker id="mermaid-1777888020216-stickBottomArrowHead" refX="7.5" refY="0" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto-start-reverse"><path d="M 0 7 L 7 0" stroke="black" stroke-width="1.5" fill="none"></path></marker></defs><g data-et="note" data-id="i1"><rect x="174.5" y="121" fill="#EDF2AE" stroke="#666" width="201" height="40" class="note"></rect><text x="275" y="126" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" class="noteText" dy="1em" style="font-size: 16px; font-weight: 400;"><tspan x="275">Regex::new / Box::into_raw</tspan></text></g><g data-et="note" data-id="i4"><rect x="200" y="263" fill="#EDF2AE" stroke="#666" width="150" height="40" class="note"></rect><text x="275" y="268" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" class="noteText" dy="1em" style="font-size: 16px; font-weight: 400;"><tspan x="275">deref ptr — reuse</tspan></text></g><g data-et="note" data-id="i9"><rect x="184" y="497" fill="#EDF2AE" stroke="#666" width="182" height="40" class="note"></rect><text x="275" y="502" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" class="noteText" dy="1em" style="font-size: 16px; font-weight: 400;"><tspan x="275">Box::from_raw — FREE</tspan></text></g><text x="174" y="80" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" class="messageText" dy="1em" style="font-size: 16px; font-weight: 400;">compile("a+")</text><line x1="76" y1="111" x2="271" y2="111" class="messageLine0" data-et="message" data-id="i0" data-from="J" data-to="R" stroke-width="2" stroke="none" marker-end="url(#mermaid-1777888020216-arrowhead)" style="fill: none;"></line><text x="177" y="176" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" class="messageText" dy="1em" style="font-size: 16px; font-weight: 400;">ptr = 0xAB</text><line x1="274" y1="207" x2="79" y2="207" class="messageLine1" data-et="message" data-id="i2" data-from="R" data-to="J" stroke-width="2" stroke="none" marker-end="url(#mermaid-1777888020216-arrowhead)" style="stroke-dasharray: 3, 3; fill: none;"></line><text x="174" y="222" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" class="messageText" dy="1em" style="font-size: 16px; font-weight: 400;">isMatch(ptr, "aaa")</text><line x1="76" y1="253" x2="271" y2="253" class="messageLine0" data-et="message" data-id="i3" data-from="J" data-to="R" stroke-width="2" stroke="none" marker-end="url(#mermaid-1777888020216-arrowhead)" style="fill: none;"></line><text x="177" y="318" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" class="messageText" dy="1em" style="font-size: 16px; font-weight: 400;">true</text><line x1="274" y1="349" x2="79" y2="349" class="messageLine1" data-et="message" data-id="i5" data-from="R" data-to="J" stroke-width="2" stroke="none" marker-end="url(#mermaid-1777888020216-arrowhead)" style="stroke-dasharray: 3, 3; fill: none;"></line><text x="174" y="364" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" class="messageText" dy="1em" style="font-size: 16px; font-weight: 400;">isMatch(ptr, "bbb")</text><line x1="76" y1="395" x2="271" y2="395" class="messageLine0" data-et="message" data-id="i6" data-from="J" data-to="R" stroke-width="2" stroke="none" marker-end="url(#mermaid-1777888020216-arrowhead)" style="fill: none;"></line><text x="177" y="410" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" class="messageText" dy="1em" style="font-size: 16px; font-weight: 400;">false</text><line x1="274" y1="441" x2="79" y2="441" class="messageLine1" data-et="message" data-id="i7" data-from="R" data-to="J" stroke-width="2" stroke="none" marker-end="url(#mermaid-1777888020216-arrowhead)" style="stroke-dasharray: 3, 3; fill: none;"></line><text x="174" y="456" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" class="messageText" dy="1em" style="font-size: 16px; font-weight: 400;">destroy(ptr)</text><line x1="76" y1="487" x2="271" y2="487" class="messageLine0" data-et="message" data-id="i8" data-from="J" data-to="R" stroke-width="2" stroke="none" marker-end="url(#mermaid-1777888020216-arrowhead)" style="fill: none;"></line></svg></div>
+    </div>
+  </div>
+  <span class="slide-num">12 / 36</span>
+</section>
+
+<section>
+  <h2>Compiled Regex</h2>
+  <div class="columns">
+    <div>
+      <pre><code class="language-rust" style="font-size:0.65em;" data-fragment-index="0" data-line-numbers="|4,8-10|14,15,19-23|27-33">pub struct RegexHandle { regex: Regex }
+
+#[no_mangle]
+pub extern "C" fn create(
+    pattern: *const u8, len: usize,
+) -> *mut RegexHandle {
+    let pat = bytes_to_str(pattern, len);
+    Box::into_raw(Box::new(RegexHandle {
+        regex: Regex::new(pat).unwrap(),
+    }))
+}
+
+#[no_mangle]
+pub extern "C" fn is_match(
+    handle: *mut RegexHandle,
+    hay: *const u8,
+    len: usize,
+) -> bool {
+    if handle.is_null() { return false; }
+    unsafe {
+      let h = &*handle;
+      h.regex.is_match(bytes_to_str(hay, len))
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn destroy(
+    handle: *mut RegexHandle
+) {
+    if !handle.is_null() {
+        unsafe { drop(Box::from_raw(handle)); }
+    }
+}</code></pre>
+    </div>
+    <div>
+      <pre><code class="language-java" style="font-size:0.65em;" data-fragment-index="0" data-line-numbers="|2-6,10-11|14-20|24-27">public class PanamaRsRegex implements AutoCloseable {
+    private final MemorySegment handle;
+    private final Arena arena;
+
+    public PanamaRsRegex(String pattern) {
+        arena = Arena.ofConfined();
+        byte[] utf8 = pattern.getBytes(UTF_8);
+        MemorySegment cPat =
+            arena.allocateFrom(JAVA_BYTE, utf8);
+        handle = (MemorySegment)
+            CREATE.invoke(cPat, cPat.byteSize());
+    }
+
+    public boolean isMatch(String haystack) {
+        try (Arena local = Arean.ofConfined()) {
+            MemorySegment cHay = 
+                arena.allocateFrom(...);
+            return (boolean) IS_MATCH.invoke(
+                handle, cHay, cHay.byteSize();
+        }
+    }
+
+    @Override
+    public void close() {
+        DESTROY.invoke(handle);
+        arena.close();
+    }
+}</code></pre>
+    </div>
+  </div>
+  <div class="callout danger-callout" style="margin-top:0.5em; font-size:0.8em;">
+    ⚠ Hidden bug — spot it before the next slide
+  </div>
+  <span class="slide-num">13 / 36</span>
+</section>
+
+
+
+<section>
+  <h2>Problem: returning multiple values</h2>
+  <ul>
+    <li><code>find()</code> should return: did it match? start offset? end offset?</li>
+    <li>C ABI: one return value → needs a struct</li>
+    <li class="fragment"><span class="tag-jni">JNI</span> — Rust can construct Java objects</li>
+    <li class="fragment"><span class="tag-panama">Panama</span> — Rust has no JVM access</li>
+       <ul class="fragment"><li>→ <strong>return a Rust struct</strong></li></ul>
+  </ul>
+  <span class="slide-num">14 / 36</span>
+</section>
+
+<section>
+  <h2>Returning a struct: <span class="tag-jni">JNI</span></h2>
+  <div class="columns">
+    <div>
+      <pre><code class="language-java" style="font-size:0.7em;" data-line-numbers="|1-4|6-8|10-12|">record JavaMatchResult(
+    boolean found,
+    int start,
+    int end) {}
+
+private native JavaMatchResult findNative(
+    long ptr,
+    String haystack);
+
+public JavaMatchResult find(String haystack) {
+    return findNative(ptr, haystack);
+}</code></pre>
+    </div>
+    <div>
+      <pre><code class="language-rust" style="font-size:0.62em;" data-line-numbers="|5|8,9,11,12|15-16,18-19">#[no_mangle]
+pub extern "system" fn Java_..._findNative(
+    mut env: JNIEnv, _class: JClass,
+    regex_ptr: jlong, haystack: JString,
+) -> jobject {
+    let regex: Regex = ...;
+    let hay: String = ...;
+    let cls  = env
+        .find_class("org/example/JavaMatchResult")
+        .unwrap();
+    let ctor = env
+        .get_method_id(cls, "<init>", "(ZII)V")
+        .unwrap();
+    match regex.find(&hay) {
+        None => env.new_object(cls, ctor,
+            &[false.into(), 0.into(), 0.into()]
+        ).unwrap().into_raw(),
+        Some(m) => env.new_object(cls, ctor,
+            &[true.into(), m.start().into(), m.end().into()]
+        ).unwrap().into_raw(),
+    }
+}</code></pre>
+    </div>
+  </div>
+  <span class="slide-num">15 / 36</span>
+</section>
+
+<section>
+  <h2>In Panama?</h2>
+  <div class="mermaid-static fragment" data-source="
+sequenceDiagram
+    participant J as Java
+    participant M as Off-heap segment (arena)
+    participant R as Rust
+    J-&gt;&gt;R: FIND.invoke(arena, handle, haystack)
+    Note over R: build MatchResult{true, 0, 5}
+    R--&gt;&gt;M: return value materialised into arena slot
+    M--&gt;&gt;J: MemorySegment view
+    J-&gt;&gt;M: FOUND.get(seg) / START.get(seg) / END.get(seg)
+    M--&gt;&gt;J: true, 0, 5
+  "><svg id="mermaid-1777901516711" width="100%" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="max-width: 1001.5px;" viewBox="-50 -10 1001.5 451" role="graphics-document document"><g><rect x="721" y="365" fill="#eaeaea" stroke="#666" width="150" height="65" name="R" rx="3" ry="3" class="actor actor-bottom"></rect><text x="796" y="397.5" dominant-baseline="central" alignment-baseline="central" class="actor actor-box" style="text-anchor: middle; font-size: 16px; font-weight: 400;"><tspan x="796" dy="0">Rust</tspan></text></g><g><rect x="380" y="365" fill="#eaeaea" stroke="#666" width="184" height="65" name="M" rx="3" ry="3" class="actor actor-bottom"></rect><text x="472" y="397.5" dominant-baseline="central" alignment-baseline="central" class="actor actor-box" style="text-anchor: middle; font-size: 16px; font-weight: 400;"><tspan x="472" dy="0">Off-heap segment (arena)</tspan></text></g><g><rect x="0" y="365" fill="#eaeaea" stroke="#666" width="150" height="65" name="J" rx="3" ry="3" class="actor actor-bottom"></rect><text x="75" y="397.5" dominant-baseline="central" alignment-baseline="central" class="actor actor-box" style="text-anchor: middle; font-size: 16px; font-weight: 400;"><tspan x="75" dy="0">Java</tspan></text></g><g><line id="actor2" x1="796" y1="65" x2="796" y2="365" class="actor-line 200" stroke-width="0.5px" stroke="#999" name="R" data-et="life-line" data-id="R"></line><g id="root-2" data-et="participant" data-type="participant" data-id="R"><rect x="721" y="0" fill="#eaeaea" stroke="#666" width="150" height="65" name="R" rx="3" ry="3" class="actor actor-top"></rect><text x="796" y="32.5" dominant-baseline="central" alignment-baseline="central" class="actor actor-box" style="text-anchor: middle; font-size: 16px; font-weight: 400;"><tspan x="796" dy="0">Rust</tspan></text></g></g><g><line id="actor1" x1="472" y1="65" x2="472" y2="365" class="actor-line 200" stroke-width="0.5px" stroke="#999" name="M" data-et="life-line" data-id="M"></line><g id="root-1" data-et="participant" data-type="participant" data-id="M"><rect x="380" y="0" fill="#eaeaea" stroke="#666" width="184" height="65" name="M" rx="3" ry="3" class="actor actor-top"></rect><text x="472" y="32.5" dominant-baseline="central" alignment-baseline="central" class="actor actor-box" style="text-anchor: middle; font-size: 16px; font-weight: 400;"><tspan x="472" dy="0">Off-heap segment (arena)</tspan></text></g></g><g><line id="actor0" x1="75" y1="65" x2="75" y2="365" class="actor-line 200" stroke-width="0.5px" stroke="#999" name="J" data-et="life-line" data-id="J"></line><g id="root-0" data-et="participant" data-type="participant" data-id="J"><rect x="0" y="0" fill="#eaeaea" stroke="#666" width="150" height="65" name="J" rx="3" ry="3" class="actor actor-top"></rect><text x="75" y="32.5" dominant-baseline="central" alignment-baseline="central" class="actor actor-box" style="text-anchor: middle; font-size: 16px; font-weight: 400;"><tspan x="75" dy="0">Java</tspan></text></g></g><style>#mermaid-1777901516711{font-family:Source Sans Pro,Segoe UI,sans-serif;font-size:18px;fill:#ffffff;}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#mermaid-1777901516711 .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#mermaid-1777901516711 .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#mermaid-1777901516711 .error-icon{fill:#2d2d2d;}#mermaid-1777901516711 .error-text{fill:#d2d2d2;stroke:#d2d2d2;}#mermaid-1777901516711 .edge-thickness-normal{stroke-width:1px;}#mermaid-1777901516711 .edge-thickness-thick{stroke-width:3.5px;}#mermaid-1777901516711 .edge-pattern-solid{stroke-dasharray:0;}#mermaid-1777901516711 .edge-thickness-invisible{stroke-width:0;fill:none;}#mermaid-1777901516711 .edge-pattern-dashed{stroke-dasharray:3;}#mermaid-1777901516711 .edge-pattern-dotted{stroke-dasharray:2;}#mermaid-1777901516711 .marker{fill:#e6a020;stroke:#e6a020;}#mermaid-1777901516711 .marker.cross{stroke:#e6a020;}#mermaid-1777901516711 svg{font-family:Source Sans Pro,Segoe UI,sans-serif;font-size:18px;}#mermaid-1777901516711 p{margin:0;}#mermaid-1777901516711 .actor{stroke:#7aa6d6;fill:#3d4a5e;stroke-width:1;}#mermaid-1777901516711 rect.actor.outer-path[data-look="neo"]{filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#mermaid-1777901516711 rect.note[data-look="neo"]{stroke:#e6a020;fill:#4a3a1f;filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#mermaid-1777901516711 text.actor&gt;tspan{fill:#ffffff;stroke:none;}#mermaid-1777901516711 .actor-line{stroke:#3a3a3a;}#mermaid-1777901516711 .innerArc{stroke-width:1.5;stroke-dasharray:none;}#mermaid-1777901516711 .messageLine0{stroke-width:1.5;stroke-dasharray:none;stroke:#e0e0e0;}#mermaid-1777901516711 .messageLine1{stroke-width:1.5;stroke-dasharray:2,2;stroke:#e0e0e0;}#mermaid-1777901516711 [id$="-arrowhead"] path{fill:#e0e0e0;stroke:#e0e0e0;}#mermaid-1777901516711 .sequenceNumber{fill:#1a1a1a;}#mermaid-1777901516711 [id$="-sequencenumber"]{fill:#e0e0e0;}#mermaid-1777901516711 [id$="-crosshead"] path{fill:#e0e0e0;stroke:#e0e0e0;}#mermaid-1777901516711 .messageText{fill:#e0e0e0;stroke:none;}#mermaid-1777901516711 .labelBox{stroke:#7aa6d6;fill:#3d4a5e;filter:none;}#mermaid-1777901516711 .labelText,#mermaid-1777901516711 .labelText&gt;tspan{fill:#ffffff;stroke:none;}#mermaid-1777901516711 .loopText,#mermaid-1777901516711 .loopText&gt;tspan{fill:#e0e0e0;stroke:none;}#mermaid-1777901516711 .loopLine{stroke-width:2px;stroke-dasharray:2,2;stroke:#7aa6d6;fill:#7aa6d6;}#mermaid-1777901516711 .note{stroke:#e6a020;fill:#4a3a1f;}#mermaid-1777901516711 .noteText,#mermaid-1777901516711 .noteText&gt;tspan{fill:#ffe9b4;stroke:none;font-weight:normal;}#mermaid-1777901516711 .activation0{fill:#5a5a5a;stroke:#aaa;}#mermaid-1777901516711 .activation1{fill:#5a5a5a;stroke:#aaa;}#mermaid-1777901516711 .activation2{fill:#5a5a5a;stroke:#aaa;}#mermaid-1777901516711 .actorPopupMenu{position:absolute;}#mermaid-1777901516711 .actorPopupMenuPanel{position:absolute;fill:#3d4a5e;box-shadow:0px 8px 16px 0px rgba(0,0,0,0.2);filter:drop-shadow(3px 5px 2px rgb(0 0 0 / 0.4));}#mermaid-1777901516711 .actor-man circle,#mermaid-1777901516711 line{fill:#3d4a5e;stroke-width:2px;}#mermaid-1777901516711 g rect.rect{filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));stroke:#7aa6d6;}#mermaid-1777901516711 .node .neo-node{stroke:#7aa6d6;}#mermaid-1777901516711 [data-look="neo"].node rect,#mermaid-1777901516711 [data-look="neo"].cluster rect,#mermaid-1777901516711 [data-look="neo"].node polygon{stroke:url(#mermaid-1777901516711-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#mermaid-1777901516711 [data-look="neo"].node path{stroke:url(#mermaid-1777901516711-gradient);stroke-width:1px;}#mermaid-1777901516711 [data-look="neo"].node .outer-path{filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#mermaid-1777901516711 [data-look="neo"].node .neo-line path{stroke:#7aa6d6;filter:none;}#mermaid-1777901516711 [data-look="neo"].node circle{stroke:url(#mermaid-1777901516711-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#mermaid-1777901516711 [data-look="neo"].node circle .state-start{fill:#000000;}#mermaid-1777901516711 [data-look="neo"].icon-shape .icon{fill:url(#mermaid-1777901516711-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#mermaid-1777901516711 [data-look="neo"].icon-shape .icon-neo path{stroke:url(#mermaid-1777901516711-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#mermaid-1777901516711 :root{--mermaid-font-family:"trebuchet ms",verdana,arial,sans-serif;}</style><g></g><defs><symbol id="mermaid-1777901516711-computer" width="24" height="24"><path transform="scale(.5)" d="M2 2v13h20v-13h-20zm18 11h-16v-9h16v9zm-10.228 6l.466-1h3.524l.467 1h-4.457zm14.228 3h-24l2-6h2.104l-1.33 4h18.45l-1.297-4h2.073l2 6zm-5-10h-14v-7h14v7z"></path></symbol></defs><defs><symbol id="mermaid-1777901516711-database" fill-rule="evenodd" clip-rule="evenodd"><path transform="scale(.5)" d="M12.258.001l.256.004.255.005.253.008.251.01.249.012.247.015.246.016.242.019.241.02.239.023.236.024.233.027.231.028.229.031.225.032.223.034.22.036.217.038.214.04.211.041.208.043.205.045.201.046.198.048.194.05.191.051.187.053.183.054.18.056.175.057.172.059.168.06.163.061.16.063.155.064.15.066.074.033.073.033.071.034.07.034.069.035.068.035.067.035.066.035.064.036.064.036.062.036.06.036.06.037.058.037.058.037.055.038.055.038.053.038.052.038.051.039.05.039.048.039.047.039.045.04.044.04.043.04.041.04.04.041.039.041.037.041.036.041.034.041.033.042.032.042.03.042.029.042.027.042.026.043.024.043.023.043.021.043.02.043.018.044.017.043.015.044.013.044.012.044.011.045.009.044.007.045.006.045.004.045.002.045.001.045v17l-.001.045-.002.045-.004.045-.006.045-.007.045-.009.044-.011.045-.012.044-.013.044-.015.044-.017.043-.018.044-.02.043-.021.043-.023.043-.024.043-.026.043-.027.042-.029.042-.03.042-.032.042-.033.042-.034.041-.036.041-.037.041-.039.041-.04.041-.041.04-.043.04-.044.04-.045.04-.047.039-.048.039-.05.039-.051.039-.052.038-.053.038-.055.038-.055.038-.058.037-.058.037-.06.037-.06.036-.062.036-.064.036-.064.036-.066.035-.067.035-.068.035-.069.035-.07.034-.071.034-.073.033-.074.033-.15.066-.155.064-.16.063-.163.061-.168.06-.172.059-.175.057-.18.056-.183.054-.187.053-.191.051-.194.05-.198.048-.201.046-.205.045-.208.043-.211.041-.214.04-.217.038-.22.036-.223.034-.225.032-.229.031-.231.028-.233.027-.236.024-.239.023-.241.02-.242.019-.246.016-.247.015-.249.012-.251.01-.253.008-.255.005-.256.004-.258.001-.258-.001-.256-.004-.255-.005-.253-.008-.251-.01-.249-.012-.247-.015-.245-.016-.243-.019-.241-.02-.238-.023-.236-.024-.234-.027-.231-.028-.228-.031-.226-.032-.223-.034-.22-.036-.217-.038-.214-.04-.211-.041-.208-.043-.204-.045-.201-.046-.198-.048-.195-.05-.19-.051-.187-.053-.184-.054-.179-.056-.176-.057-.172-.059-.167-.06-.164-.061-.159-.063-.155-.064-.151-.066-.074-.033-.072-.033-.072-.034-.07-.034-.069-.035-.068-.035-.067-.035-.066-.035-.064-.036-.063-.036-.062-.036-.061-.036-.06-.037-.058-.037-.057-.037-.056-.038-.055-.038-.053-.038-.052-.038-.051-.039-.049-.039-.049-.039-.046-.039-.046-.04-.044-.04-.043-.04-.041-.04-.04-.041-.039-.041-.037-.041-.036-.041-.034-.041-.033-.042-.032-.042-.03-.042-.029-.042-.027-.042-.026-.043-.024-.043-.023-.043-.021-.043-.02-.043-.018-.044-.017-.043-.015-.044-.013-.044-.012-.044-.011-.045-.009-.044-.007-.045-.006-.045-.004-.045-.002-.045-.001-.045v-17l.001-.045.002-.045.004-.045.006-.045.007-.045.009-.044.011-.045.012-.044.013-.044.015-.044.017-.043.018-.044.02-.043.021-.043.023-.043.024-.043.026-.043.027-.042.029-.042.03-.042.032-.042.033-.042.034-.041.036-.041.037-.041.039-.041.04-.041.041-.04.043-.04.044-.04.046-.04.046-.039.049-.039.049-.039.051-.039.052-.038.053-.038.055-.038.056-.038.057-.037.058-.037.06-.037.061-.036.062-.036.063-.036.064-.036.066-.035.067-.035.068-.035.069-.035.07-.034.072-.034.072-.033.074-.033.151-.066.155-.064.159-.063.164-.061.167-.06.172-.059.176-.057.179-.056.184-.054.187-.053.19-.051.195-.05.198-.048.201-.046.204-.045.208-.043.211-.041.214-.04.217-.038.22-.036.223-.034.226-.032.228-.031.231-.028.234-.027.236-.024.238-.023.241-.02.243-.019.245-.016.247-.015.249-.012.251-.01.253-.008.255-.005.256-.004.258-.001.258.001zm-9.258 20.499v.01l.001.021.003.021.004.022.005.021.006.022.007.022.009.023.01.022.011.023.012.023.013.023.015.023.016.024.017.023.018.024.019.024.021.024.022.025.023.024.024.025.052.049.056.05.061.051.066.051.07.051.075.051.079.052.084.052.088.052.092.052.097.052.102.051.105.052.11.052.114.051.119.051.123.051.127.05.131.05.135.05.139.048.144.049.147.047.152.047.155.047.16.045.163.045.167.043.171.043.176.041.178.041.183.039.187.039.19.037.194.035.197.035.202.033.204.031.209.03.212.029.216.027.219.025.222.024.226.021.23.02.233.018.236.016.24.015.243.012.246.01.249.008.253.005.256.004.259.001.26-.001.257-.004.254-.005.25-.008.247-.011.244-.012.241-.014.237-.016.233-.018.231-.021.226-.021.224-.024.22-.026.216-.027.212-.028.21-.031.205-.031.202-.034.198-.034.194-.036.191-.037.187-.039.183-.04.179-.04.175-.042.172-.043.168-.044.163-.045.16-.046.155-.046.152-.047.148-.048.143-.049.139-.049.136-.05.131-.05.126-.05.123-.051.118-.052.114-.051.11-.052.106-.052.101-.052.096-.052.092-.052.088-.053.083-.051.079-.052.074-.052.07-.051.065-.051.06-.051.056-.05.051-.05.023-.024.023-.025.021-.024.02-.024.019-.024.018-.024.017-.024.015-.023.014-.024.013-.023.012-.023.01-.023.01-.022.008-.022.006-.022.006-.022.004-.022.004-.021.001-.021.001-.021v-4.127l-.077.055-.08.053-.083.054-.085.053-.087.052-.09.052-.093.051-.095.05-.097.05-.1.049-.102.049-.105.048-.106.047-.109.047-.111.046-.114.045-.115.045-.118.044-.12.043-.122.042-.124.042-.126.041-.128.04-.13.04-.132.038-.134.038-.135.037-.138.037-.139.035-.142.035-.143.034-.144.033-.147.032-.148.031-.15.03-.151.03-.153.029-.154.027-.156.027-.158.026-.159.025-.161.024-.162.023-.163.022-.165.021-.166.02-.167.019-.169.018-.169.017-.171.016-.173.015-.173.014-.175.013-.175.012-.177.011-.178.01-.179.008-.179.008-.181.006-.182.005-.182.004-.184.003-.184.002h-.37l-.184-.002-.184-.003-.182-.004-.182-.005-.181-.006-.179-.008-.179-.008-.178-.01-.176-.011-.176-.012-.175-.013-.173-.014-.172-.015-.171-.016-.17-.017-.169-.018-.167-.019-.166-.02-.165-.021-.163-.022-.162-.023-.161-.024-.159-.025-.157-.026-.156-.027-.155-.027-.153-.029-.151-.03-.15-.03-.148-.031-.146-.032-.145-.033-.143-.034-.141-.035-.14-.035-.137-.037-.136-.037-.134-.038-.132-.038-.13-.04-.128-.04-.126-.041-.124-.042-.122-.042-.12-.044-.117-.043-.116-.045-.113-.045-.112-.046-.109-.047-.106-.047-.105-.048-.102-.049-.1-.049-.097-.05-.095-.05-.093-.052-.09-.051-.087-.052-.085-.053-.083-.054-.08-.054-.077-.054v4.127zm0-5.654v.011l.001.021.003.021.004.021.005.022.006.022.007.022.009.022.01.022.011.023.012.023.013.023.015.024.016.023.017.024.018.024.019.024.021.024.022.024.023.025.024.024.052.05.056.05.061.05.066.051.07.051.075.052.079.051.084.052.088.052.092.052.097.052.102.052.105.052.11.051.114.051.119.052.123.05.127.051.131.05.135.049.139.049.144.048.147.048.152.047.155.046.16.045.163.045.167.044.171.042.176.042.178.04.183.04.187.038.19.037.194.036.197.034.202.033.204.032.209.03.212.028.216.027.219.025.222.024.226.022.23.02.233.018.236.016.24.014.243.012.246.01.249.008.253.006.256.003.259.001.26-.001.257-.003.254-.006.25-.008.247-.01.244-.012.241-.015.237-.016.233-.018.231-.02.226-.022.224-.024.22-.025.216-.027.212-.029.21-.03.205-.032.202-.033.198-.035.194-.036.191-.037.187-.039.183-.039.179-.041.175-.042.172-.043.168-.044.163-.045.16-.045.155-.047.152-.047.148-.048.143-.048.139-.05.136-.049.131-.05.126-.051.123-.051.118-.051.114-.052.11-.052.106-.052.101-.052.096-.052.092-.052.088-.052.083-.052.079-.052.074-.051.07-.052.065-.051.06-.05.056-.051.051-.049.023-.025.023-.024.021-.025.02-.024.019-.024.018-.024.017-.024.015-.023.014-.023.013-.024.012-.022.01-.023.01-.023.008-.022.006-.022.006-.022.004-.021.004-.022.001-.021.001-.021v-4.139l-.077.054-.08.054-.083.054-.085.052-.087.053-.09.051-.093.051-.095.051-.097.05-.1.049-.102.049-.105.048-.106.047-.109.047-.111.046-.114.045-.115.044-.118.044-.12.044-.122.042-.124.042-.126.041-.128.04-.13.039-.132.039-.134.038-.135.037-.138.036-.139.036-.142.035-.143.033-.144.033-.147.033-.148.031-.15.03-.151.03-.153.028-.154.028-.156.027-.158.026-.159.025-.161.024-.162.023-.163.022-.165.021-.166.02-.167.019-.169.018-.169.017-.171.016-.173.015-.173.014-.175.013-.175.012-.177.011-.178.009-.179.009-.179.007-.181.007-.182.005-.182.004-.184.003-.184.002h-.37l-.184-.002-.184-.003-.182-.004-.182-.005-.181-.007-.179-.007-.179-.009-.178-.009-.176-.011-.176-.012-.175-.013-.173-.014-.172-.015-.171-.016-.17-.017-.169-.018-.167-.019-.166-.02-.165-.021-.163-.022-.162-.023-.161-.024-.159-.025-.157-.026-.156-.027-.155-.028-.153-.028-.151-.03-.15-.03-.148-.031-.146-.033-.145-.033-.143-.033-.141-.035-.14-.036-.137-.036-.136-.037-.134-.038-.132-.039-.13-.039-.128-.04-.126-.041-.124-.042-.122-.043-.12-.043-.117-.044-.116-.044-.113-.046-.112-.046-.109-.046-.106-.047-.105-.048-.102-.049-.1-.049-.097-.05-.095-.051-.093-.051-.09-.051-.087-.053-.085-.052-.083-.054-.08-.054-.077-.054v4.139zm0-5.666v.011l.001.02.003.022.004.021.005.022.006.021.007.022.009.023.01.022.011.023.012.023.013.023.015.023.016.024.017.024.018.023.019.024.021.025.022.024.023.024.024.025.052.05.056.05.061.05.066.051.07.051.075.052.079.051.084.052.088.052.092.052.097.052.102.052.105.051.11.052.114.051.119.051.123.051.127.05.131.05.135.05.139.049.144.048.147.048.152.047.155.046.16.045.163.045.167.043.171.043.176.042.178.04.183.04.187.038.19.037.194.036.197.034.202.033.204.032.209.03.212.028.216.027.219.025.222.024.226.021.23.02.233.018.236.017.24.014.243.012.246.01.249.008.253.006.256.003.259.001.26-.001.257-.003.254-.006.25-.008.247-.01.244-.013.241-.014.237-.016.233-.018.231-.02.226-.022.224-.024.22-.025.216-.027.212-.029.21-.03.205-.032.202-.033.198-.035.194-.036.191-.037.187-.039.183-.039.179-.041.175-.042.172-.043.168-.044.163-.045.16-.045.155-.047.152-.047.148-.048.143-.049.139-.049.136-.049.131-.051.126-.05.123-.051.118-.052.114-.051.11-.052.106-.052.101-.052.096-.052.092-.052.088-.052.083-.052.079-.052.074-.052.07-.051.065-.051.06-.051.056-.05.051-.049.023-.025.023-.025.021-.024.02-.024.019-.024.018-.024.017-.024.015-.023.014-.024.013-.023.012-.023.01-.022.01-.023.008-.022.006-.022.006-.022.004-.022.004-.021.001-.021.001-.021v-4.153l-.077.054-.08.054-.083.053-.085.053-.087.053-.09.051-.093.051-.095.051-.097.05-.1.049-.102.048-.105.048-.106.048-.109.046-.111.046-.114.046-.115.044-.118.044-.12.043-.122.043-.124.042-.126.041-.128.04-.13.039-.132.039-.134.038-.135.037-.138.036-.139.036-.142.034-.143.034-.144.033-.147.032-.148.032-.15.03-.151.03-.153.028-.154.028-.156.027-.158.026-.159.024-.161.024-.162.023-.163.023-.165.021-.166.02-.167.019-.169.018-.169.017-.171.016-.173.015-.173.014-.175.013-.175.012-.177.01-.178.01-.179.009-.179.007-.181.006-.182.006-.182.004-.184.003-.184.001-.185.001-.185-.001-.184-.001-.184-.003-.182-.004-.182-.006-.181-.006-.179-.007-.179-.009-.178-.01-.176-.01-.176-.012-.175-.013-.173-.014-.172-.015-.171-.016-.17-.017-.169-.018-.167-.019-.166-.02-.165-.021-.163-.023-.162-.023-.161-.024-.159-.024-.157-.026-.156-.027-.155-.028-.153-.028-.151-.03-.15-.03-.148-.032-.146-.032-.145-.033-.143-.034-.141-.034-.14-.036-.137-.036-.136-.037-.134-.038-.132-.039-.13-.039-.128-.041-.126-.041-.124-.041-.122-.043-.12-.043-.117-.044-.116-.044-.113-.046-.112-.046-.109-.046-.106-.048-.105-.048-.102-.048-.1-.05-.097-.049-.095-.051-.093-.051-.09-.052-.087-.052-.085-.053-.083-.053-.08-.054-.077-.054v4.153zm8.74-8.179l-.257.004-.254.005-.25.008-.247.011-.244.012-.241.014-.237.016-.233.018-.231.021-.226.022-.224.023-.22.026-.216.027-.212.028-.21.031-.205.032-.202.033-.198.034-.194.036-.191.038-.187.038-.183.04-.179.041-.175.042-.172.043-.168.043-.163.045-.16.046-.155.046-.152.048-.148.048-.143.048-.139.049-.136.05-.131.05-.126.051-.123.051-.118.051-.114.052-.11.052-.106.052-.101.052-.096.052-.092.052-.088.052-.083.052-.079.052-.074.051-.07.052-.065.051-.06.05-.056.05-.051.05-.023.025-.023.024-.021.024-.02.025-.019.024-.018.024-.017.023-.015.024-.014.023-.013.023-.012.023-.01.023-.01.022-.008.022-.006.023-.006.021-.004.022-.004.021-.001.021-.001.021.001.021.001.021.004.021.004.022.006.021.006.023.008.022.01.022.01.023.012.023.013.023.014.023.015.024.017.023.018.024.019.024.02.025.021.024.023.024.023.025.051.05.056.05.06.05.065.051.07.052.074.051.079.052.083.052.088.052.092.052.096.052.101.052.106.052.11.052.114.052.118.051.123.051.126.051.131.05.136.05.139.049.143.048.148.048.152.048.155.046.16.046.163.045.168.043.172.043.175.042.179.041.183.04.187.038.191.038.194.036.198.034.202.033.205.032.21.031.212.028.216.027.22.026.224.023.226.022.231.021.233.018.237.016.241.014.244.012.247.011.25.008.254.005.257.004.26.001.26-.001.257-.004.254-.005.25-.008.247-.011.244-.012.241-.014.237-.016.233-.018.231-.021.226-.022.224-.023.22-.026.216-.027.212-.028.21-.031.205-.032.202-.033.198-.034.194-.036.191-.038.187-.038.183-.04.179-.041.175-.042.172-.043.168-.043.163-.045.16-.046.155-.046.152-.048.148-.048.143-.048.139-.049.136-.05.131-.05.126-.051.123-.051.118-.051.114-.052.11-.052.106-.052.101-.052.096-.052.092-.052.088-.052.083-.052.079-.052.074-.051.07-.052.065-.051.06-.05.056-.05.051-.05.023-.025.023-.024.021-.024.02-.025.019-.024.018-.024.017-.023.015-.024.014-.023.013-.023.012-.023.01-.023.01-.022.008-.022.006-.023.006-.021.004-.022.004-.021.001-.021.001-.021-.001-.021-.001-.021-.004-.021-.004-.022-.006-.021-.006-.023-.008-.022-.01-.022-.01-.023-.012-.023-.013-.023-.014-.023-.015-.024-.017-.023-.018-.024-.019-.024-.02-.025-.021-.024-.023-.024-.023-.025-.051-.05-.056-.05-.06-.05-.065-.051-.07-.052-.074-.051-.079-.052-.083-.052-.088-.052-.092-.052-.096-.052-.101-.052-.106-.052-.11-.052-.114-.052-.118-.051-.123-.051-.126-.051-.131-.05-.136-.05-.139-.049-.143-.048-.148-.048-.152-.048-.155-.046-.16-.046-.163-.045-.168-.043-.172-.043-.175-.042-.179-.041-.183-.04-.187-.038-.191-.038-.194-.036-.198-.034-.202-.033-.205-.032-.21-.031-.212-.028-.216-.027-.22-.026-.224-.023-.226-.022-.231-.021-.233-.018-.237-.016-.241-.014-.244-.012-.247-.011-.25-.008-.254-.005-.257-.004-.26-.001-.26.001z"></path></symbol></defs><defs><symbol id="mermaid-1777901516711-clock" width="24" height="24"><path transform="scale(.5)" d="M12 2c5.514 0 10 4.486 10 10s-4.486 10-10 10-10-4.486-10-10 4.486-10 10-10zm0-2c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm5.848 12.459c.202.038.202.333.001.372-1.907.361-6.045 1.111-6.547 1.111-.719 0-1.301-.582-1.301-1.301 0-.512.77-5.447 1.125-7.445.034-.192.312-.181.343.014l.985 6.238 5.394 1.011z"></path></symbol></defs><defs><marker id="mermaid-1777901516711-arrowhead" refX="7.9" refY="5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto-start-reverse"><path d="M -1 0 L 10 5 L 0 10 z"></path></marker></defs><defs><marker id="mermaid-1777901516711-crosshead" markerWidth="15" markerHeight="8" orient="auto" refX="4" refY="4.5"><path fill="none" stroke="#000000" stroke-width="1pt" d="M 1,2 L 6,7 M 6,2 L 1,7" style="stroke-dasharray: 0, 0;"></path></marker></defs><defs><marker id="mermaid-1777901516711-filled-head" refX="15.5" refY="7" markerWidth="20" markerHeight="28" orient="auto"><path d="M 18,7 L9,13 L14,7 L9,1 Z"></path></marker></defs><defs><marker id="mermaid-1777901516711-sequencenumber" refX="15" refY="15" markerWidth="60" markerHeight="40" orient="auto"><circle cx="15" cy="15" r="6"></circle></marker></defs><defs><marker id="mermaid-1777901516711-solidTopArrowHead" refX="7.9" refY="7.25" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto-start-reverse"><path d="M 0 0 L 10 8 L 0 8 z"></path></marker></defs><defs><marker id="mermaid-1777901516711-solidBottomArrowHead" refX="7.9" refY="0.75" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto-start-reverse"><path d="M 0 0 L 10 0 L 0 8 z"></path></marker></defs><defs><marker id="mermaid-1777901516711-stickTopArrowHead" refX="7.5" refY="7" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto-start-reverse"><path d="M 0 0 L 7 7" stroke="black" stroke-width="1.5" fill="none"></path></marker></defs><defs><marker id="mermaid-1777901516711-stickBottomArrowHead" refX="7.5" refY="0" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto-start-reverse"><path d="M 0 7 L 7 0" stroke="black" stroke-width="1.5" fill="none"></path></marker></defs><g data-et="note" data-id="i1"><rect x="690.5" y="121" fill="#EDF2AE" stroke="#666" width="211" height="40" class="note"></rect><text x="796" y="126" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" class="noteText" dy="1em" style="font-size: 16px; font-weight: 400;"><tspan x="796">build MatchResult{true, 0, 5}</tspan></text></g><text x="434" y="80" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" class="messageText" dy="1em" style="font-size: 16px; font-weight: 400;">FIND.invoke(arena, handle, haystack)</text><line x1="76" y1="111" x2="792" y2="111" class="messageLine0" data-et="message" data-id="i0" data-from="J" data-to="R" stroke-width="2" stroke="none" marker-end="url(#mermaid-1777901516711-arrowhead)" style="fill: none;"></line><text x="636" y="176" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" class="messageText" dy="1em" style="font-size: 16px; font-weight: 400;">return value materialised into arena slot</text><line x1="795" y1="207" x2="476" y2="207" class="messageLine1" data-et="message" data-id="i2" data-from="R" data-to="M" stroke-width="2" stroke="none" marker-end="url(#mermaid-1777901516711-arrowhead)" style="stroke-dasharray: 3, 3; fill: none;"></line><text x="275" y="222" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" class="messageText" dy="1em" style="font-size: 16px; font-weight: 400;">MemorySegment view</text><line x1="471" y1="253" x2="79" y2="253" class="messageLine1" data-et="message" data-id="i3" data-from="M" data-to="J" stroke-width="2" stroke="none" marker-end="url(#mermaid-1777901516711-arrowhead)" style="stroke-dasharray: 3, 3; fill: none;"></line><text x="272" y="268" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" class="messageText" dy="1em" style="font-size: 16px; font-weight: 400;">FOUND.get(seg) / START.get(seg) / END.get(seg)</text><line x1="76" y1="299" x2="468" y2="299" class="messageLine0" data-et="message" data-id="i4" data-from="J" data-to="M" stroke-width="2" stroke="none" marker-end="url(#mermaid-1777901516711-arrowhead)" style="fill: none;"></line><text x="275" y="314" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" class="messageText" dy="1em" style="font-size: 16px; font-weight: 400;">true, 0, 5</text><line x1="471" y1="345" x2="79" y2="345" class="messageLine1" data-et="message" data-id="i5" data-from="M" data-to="J" stroke-width="2" stroke="none" marker-end="url(#mermaid-1777901516711-arrowhead)" style="stroke-dasharray: 3, 3; fill: none;"></line></svg></div>
+  <span class="slide-num">16 / 36</span>
+</section>
+
+<section style="padding-left: 0; padding-right: 0;">
+  <h2>Returning a struct: <span class="tag-panama">Panama</span></h2>
+  <div class="columns" style="gap: 0.3em;">
+    <div>
+      <pre><code class="language-rust" style="font-size:0.7em;" data-fragment-index="0" data-line-numbers="|1-6|9,12,15-20">#[repr(C)]
+pub struct MatchResult {
+    pub found: bool,
+    pub start: i32,
+    pub end:   i32,
+}
+
+#[no_mangle]
+pub extern "C" fn find(
+    handle: *mut RegexHandle,
+    hay_ptr: *const u8, hay_len: usize,
+) -> MatchResult {
+    let hay = bytes_to_str(hay_ptr, hay_len);
+    match unsafe { &*handle }.regex.find(hay) {
+        Some(m) => MatchResult {
+            found: true,
+            start: m.start() as i32,
+            end:   m.end()   as i32,
+        },
+        None => MatchResult { found: false, start: 0, end: 0 },
+    }
+}</code></pre>
+    </div>
+    <div>
+      <pre><code class="language-java" style="font-size:0.7em;" data-fragment-index="0" data-line-numbers="|1-4,5-10|19-28">static final StructLayout MATCH_RESULT = MemoryLayout.structLayout(
+  JAVA_BOOLEAN.withName("found"),
+  JAVA_INT.withName("start"),
+  JAVA_INT.withName("end"));
+static final VarHandle FOUND =
+  MATCH_RESULT.varHandle(groupElement("found"));
+static final VarHandle START =
+  MATCH_RESULT.varHandle(groupElement("start"));
+static final VarHandle END   =
+  MATCH_RESULT.varHandle(groupElement("end"));
+
+static final MethodHandle FIND =
+  Linker.nativeLinker().downcallHandle(...)
+
+public JavaMatchResult find(String haystack) {
+  try (Arena arena = Arena.ofConfined()) {
+    byte[] utf8 = ...; 
+    MemorySegment cHay = ...;
+    MemorySegment out = (MemorySegment) FIND
+      .invoke(
+        arena, handle, cHay, cHay.byteSize());
+    if (!(boolean) FOUND.get(out, 0L))
+      return new JavaMatchResult(false, 0, 0);
+    return new JavaMatchResult(
+      true,
+      (int) START.get(out, 0L), 
+      (int) END.get(out, 0L));
+  }
+}</code></pre>
+    </div>
+  </div>
+  <div class="callout danger-callout" style="margin-top:0.5em; font-size:0.8em;">
+    ⚠ Hidden bug — spot it before the next slide
+  </div>
+  <span class="slide-num">17 / 36</span>
+</section>
+
+<section>
+  <h2>The padding trap</h2>
+  <div class="columns fragment">
+    <div>
+      <p style="color:#e74c3c; font-size:0.8em;">❌ What we just wrote</p>
+      <pre><code class="language-java">structLayout(
+  JAVA_BOOLEAN, // offset 0, 1B
+  JAVA_INT,     // offset 1 ← WRONG!
+  JAVA_INT      // offset 5 ← WRONG!
+)</code></pre>
+    </div>
+    <div class="fragment">
+      <p style="color:#2ecc71; font-size:0.8em;">✓ Correct</p>
+      <pre><code class="language-java">structLayout(
+  JAVA_BOOLEAN,    // offset 0, 1B
+  paddingLayout(3),// 3B padding
+  JAVA_INT,        // offset 4 ✓
+  JAVA_INT         // offset 8 ✓
+)</code></pre>
+    </div>
+  </div>
+  <span class="slide-num">18 / 36</span>
+</section>
+
+<section>
+  <h2>From Rust to Java bindings</h2>
+  <div class="pipeline">
+    <span class="pill rust-pill">Rust source</span>
+    <span class="arrow">→</span>
+    <span class="pill highlight">cbindgen</span>
+    <span class="arrow">→</span>
+    <span class="pill">regex_h.h</span>
+    <span class="arrow">→</span>
+    <span class="pill">jextract</span>
+    <span class="arrow">→</span>
+    <span class="pill java-pill">Java bindings</span>
+  </div>
+
+  <div class="fragment">
+    <h3 style="color:var(--accent); font-size:0.9em; margin-top:0.8em;">1. Generate a C header from Rust</h3>
+    <pre><code class="language-bash">cargo install cbindgen
+cbindgen --crate jrs-regex-panama --output regex_h.h</code></pre>
+  </div>
+  <div class="fragment">
+    <h3 style="color:var(--accent); font-size:0.9em; margin-top:0.8em;">2. The generated header</h3>
+    <pre><code class="language-c">// regex_h.h — generated by cbindgen
+struct MatchResult { bool found; int32_t start; int32_t end; };
+
+struct RegexHandle *create(
+    const uint8_t *pat_ptr, uintptr_t pat_len);
+bool is_match(const struct RegexHandle *handle, ...);
+void destroy(struct RegexHandle *handle);</code></pre>
+  </div>
+  <span class="slide-num">19 / 36</span>
+</section>
+
+<section>
+  <h2>From Rust to Java bindings</h2>
+  <div class="pipeline">
+    <span class="pill rust-pill">Rust source</span>
+    <span class="arrow">→</span>
+    <span class="pill">cbindgen</span>
+    <span class="arrow">→</span>
+    <span class="pill">regex_h.h</span>
+    <span class="arrow">→</span>
+    <span class="pill highlight">jextract</span>
+    <span class="arrow">→</span>
+    <span class="pill java-pill">Java bindings</span>
+  </div>
+
+  <h3 style="color:var(--accent); font-size:0.9em; margin-top:0.8em;">3. Auto-generate Java bindings</h3>
+  <pre ><code class="language-bash">jextract --output src/main/java \
+  --target-package org.example.rust.generated \
+  regex_h.h</code></pre>
+
+  <div class="fragment">
+    <pre ><code class="language-java">// Generated by jextract — you don't write this by hand
+public static MethodHandle is_match =
+    LINKER.downcallHandle(
+        LOOKUP.find("is_match").orElseThrow(),
+        FunctionDescriptor.of(JAVA_BOOLEAN, ADDRESS, ADDRESS, JAVA_LONG));
+
+public static StructLayout MatchResult = MemoryLayout.structLayout(
+    JAVA_BOOLEAN.withName("found"),
+    MemoryLayout.paddingLayout(3),   // jextract gets the padding right
+    JAVA_INT.withName("start"),
+    JAVA_INT.withName("end"));</code></pre>
+  </div>
+  <span class="slide-num">20 / 36</span>
+</section>
+
+<section>
+  <h2>Callback/upcalls</h2>
+  <div class="mermaid-static" data-source="
+sequenceDiagram
+    participant J as Java
+    participant R as Rust
+    J-&gt;&gt;R: findAll(handle, text, cb)
+    rect rgba(46,204,113,0.18)
+    R--&gt;&gt;J: cb(0, 5)   — match 1
+    J--&gt;&gt;R: true (continue)
+    end
+    rect rgba(46,204,113,0.18)
+    R--&gt;&gt;J: cb(7, 12)  — match 2
+    J--&gt;&gt;R: true (continue)
+    end
+    rect rgba(231,76,60,0.18)
+    R--&gt;&gt;J: cb(14, 19) — match 3
+    J--&gt;&gt;R: false (stop early)
+    end
+    R-&gt;&gt;J: (returns)
+  "><svg id="mermaid-1777904931754" width="100%" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="max-width: 474px;" viewBox="-50 -10 474 629" role="graphics-document document"><rect x="64" y="365" fill="rgba(231,76,60,0.18)" width="246" height="112" class="rect"></rect><rect x="64" y="243" fill="rgba(46,204,113,0.18)" width="246" height="112" class="rect"></rect><rect x="64" y="121" fill="rgba(46,204,113,0.18)" width="246" height="112" class="rect"></rect><g><rect x="224" y="543" fill="#eaeaea" stroke="#666" width="150" height="65" name="R" rx="3" ry="3" class="actor actor-bottom"></rect><text x="299" y="575.5" dominant-baseline="central" alignment-baseline="central" class="actor actor-box" style="text-anchor: middle; font-size: 16px; font-weight: 400;"><tspan x="299" dy="0">Rust</tspan></text></g><g><rect x="0" y="543" fill="#eaeaea" stroke="#666" width="150" height="65" name="J" rx="3" ry="3" class="actor actor-bottom"></rect><text x="75" y="575.5" dominant-baseline="central" alignment-baseline="central" class="actor actor-box" style="text-anchor: middle; font-size: 16px; font-weight: 400;"><tspan x="75" dy="0">Java</tspan></text></g><g><line id="actor1" x1="299" y1="65" x2="299" y2="543" class="actor-line 200" stroke-width="0.5px" stroke="#999" name="R" data-et="life-line" data-id="R"></line><g id="root-1" data-et="participant" data-type="participant" data-id="R"><rect x="224" y="0" fill="#eaeaea" stroke="#666" width="150" height="65" name="R" rx="3" ry="3" class="actor actor-top"></rect><text x="299" y="32.5" dominant-baseline="central" alignment-baseline="central" class="actor actor-box" style="text-anchor: middle; font-size: 16px; font-weight: 400;"><tspan x="299" dy="0">Rust</tspan></text></g></g><g><line id="actor0" x1="75" y1="65" x2="75" y2="543" class="actor-line 200" stroke-width="0.5px" stroke="#999" name="J" data-et="life-line" data-id="J"></line><g id="root-0" data-et="participant" data-type="participant" data-id="J"><rect x="0" y="0" fill="#eaeaea" stroke="#666" width="150" height="65" name="J" rx="3" ry="3" class="actor actor-top"></rect><text x="75" y="32.5" dominant-baseline="central" alignment-baseline="central" class="actor actor-box" style="text-anchor: middle; font-size: 16px; font-weight: 400;"><tspan x="75" dy="0">Java</tspan></text></g></g><style>#mermaid-1777904931754{font-family:Source Sans Pro,Segoe UI,sans-serif;font-size:18px;fill:#ffffff;}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#mermaid-1777904931754 .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#mermaid-1777904931754 .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#mermaid-1777904931754 .error-icon{fill:#2d2d2d;}#mermaid-1777904931754 .error-text{fill:#d2d2d2;stroke:#d2d2d2;}#mermaid-1777904931754 .edge-thickness-normal{stroke-width:1px;}#mermaid-1777904931754 .edge-thickness-thick{stroke-width:3.5px;}#mermaid-1777904931754 .edge-pattern-solid{stroke-dasharray:0;}#mermaid-1777904931754 .edge-thickness-invisible{stroke-width:0;fill:none;}#mermaid-1777904931754 .edge-pattern-dashed{stroke-dasharray:3;}#mermaid-1777904931754 .edge-pattern-dotted{stroke-dasharray:2;}#mermaid-1777904931754 .marker{fill:#e6a020;stroke:#e6a020;}#mermaid-1777904931754 .marker.cross{stroke:#e6a020;}#mermaid-1777904931754 svg{font-family:Source Sans Pro,Segoe UI,sans-serif;font-size:18px;}#mermaid-1777904931754 p{margin:0;}#mermaid-1777904931754 .actor{stroke:#7aa6d6;fill:#3d4a5e;stroke-width:1;}#mermaid-1777904931754 rect.actor.outer-path[data-look="neo"]{filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#mermaid-1777904931754 rect.note[data-look="neo"]{stroke:#e6a020;fill:#4a3a1f;filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#mermaid-1777904931754 text.actor&gt;tspan{fill:#ffffff;stroke:none;}#mermaid-1777904931754 .actor-line{stroke:#3a3a3a;}#mermaid-1777904931754 .innerArc{stroke-width:1.5;stroke-dasharray:none;}#mermaid-1777904931754 .messageLine0{stroke-width:1.5;stroke-dasharray:none;stroke:#e0e0e0;}#mermaid-1777904931754 .messageLine1{stroke-width:1.5;stroke-dasharray:2,2;stroke:#e0e0e0;}#mermaid-1777904931754 [id$="-arrowhead"] path{fill:#e0e0e0;stroke:#e0e0e0;}#mermaid-1777904931754 .sequenceNumber{fill:#1a1a1a;}#mermaid-1777904931754 [id$="-sequencenumber"]{fill:#e0e0e0;}#mermaid-1777904931754 [id$="-crosshead"] path{fill:#e0e0e0;stroke:#e0e0e0;}#mermaid-1777904931754 .messageText{fill:#e0e0e0;stroke:none;}#mermaid-1777904931754 .labelBox{stroke:#7aa6d6;fill:#3d4a5e;filter:none;}#mermaid-1777904931754 .labelText,#mermaid-1777904931754 .labelText&gt;tspan{fill:#ffffff;stroke:none;}#mermaid-1777904931754 .loopText,#mermaid-1777904931754 .loopText&gt;tspan{fill:#e0e0e0;stroke:none;}#mermaid-1777904931754 .loopLine{stroke-width:2px;stroke-dasharray:2,2;stroke:#7aa6d6;fill:#7aa6d6;}#mermaid-1777904931754 .note{stroke:#e6a020;fill:#4a3a1f;}#mermaid-1777904931754 .noteText,#mermaid-1777904931754 .noteText&gt;tspan{fill:#ffe9b4;stroke:none;font-weight:normal;}#mermaid-1777904931754 .activation0{fill:#5a5a5a;stroke:#aaa;}#mermaid-1777904931754 .activation1{fill:#5a5a5a;stroke:#aaa;}#mermaid-1777904931754 .activation2{fill:#5a5a5a;stroke:#aaa;}#mermaid-1777904931754 .actorPopupMenu{position:absolute;}#mermaid-1777904931754 .actorPopupMenuPanel{position:absolute;fill:#3d4a5e;box-shadow:0px 8px 16px 0px rgba(0,0,0,0.2);filter:drop-shadow(3px 5px 2px rgb(0 0 0 / 0.4));}#mermaid-1777904931754 .actor-man circle,#mermaid-1777904931754 line{fill:#3d4a5e;stroke-width:2px;}#mermaid-1777904931754 g rect.rect{filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));stroke:#7aa6d6;}#mermaid-1777904931754 .node .neo-node{stroke:#7aa6d6;}#mermaid-1777904931754 [data-look="neo"].node rect,#mermaid-1777904931754 [data-look="neo"].cluster rect,#mermaid-1777904931754 [data-look="neo"].node polygon{stroke:url(#mermaid-1777904931754-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#mermaid-1777904931754 [data-look="neo"].node path{stroke:url(#mermaid-1777904931754-gradient);stroke-width:1px;}#mermaid-1777904931754 [data-look="neo"].node .outer-path{filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#mermaid-1777904931754 [data-look="neo"].node .neo-line path{stroke:#7aa6d6;filter:none;}#mermaid-1777904931754 [data-look="neo"].node circle{stroke:url(#mermaid-1777904931754-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#mermaid-1777904931754 [data-look="neo"].node circle .state-start{fill:#000000;}#mermaid-1777904931754 [data-look="neo"].icon-shape .icon{fill:url(#mermaid-1777904931754-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#mermaid-1777904931754 [data-look="neo"].icon-shape .icon-neo path{stroke:url(#mermaid-1777904931754-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#mermaid-1777904931754 :root{--mermaid-font-family:"trebuchet ms",verdana,arial,sans-serif;}</style><g></g><defs><symbol id="mermaid-1777904931754-computer" width="24" height="24"><path transform="scale(.5)" d="M2 2v13h20v-13h-20zm18 11h-16v-9h16v9zm-10.228 6l.466-1h3.524l.467 1h-4.457zm14.228 3h-24l2-6h2.104l-1.33 4h18.45l-1.297-4h2.073l2 6zm-5-10h-14v-7h14v7z"></path></symbol></defs><defs><symbol id="mermaid-1777904931754-database" fill-rule="evenodd" clip-rule="evenodd"><path transform="scale(.5)" d="M12.258.001l.256.004.255.005.253.008.251.01.249.012.247.015.246.016.242.019.241.02.239.023.236.024.233.027.231.028.229.031.225.032.223.034.22.036.217.038.214.04.211.041.208.043.205.045.201.046.198.048.194.05.191.051.187.053.183.054.18.056.175.057.172.059.168.06.163.061.16.063.155.064.15.066.074.033.073.033.071.034.07.034.069.035.068.035.067.035.066.035.064.036.064.036.062.036.06.036.06.037.058.037.058.037.055.038.055.038.053.038.052.038.051.039.05.039.048.039.047.039.045.04.044.04.043.04.041.04.04.041.039.041.037.041.036.041.034.041.033.042.032.042.03.042.029.042.027.042.026.043.024.043.023.043.021.043.02.043.018.044.017.043.015.044.013.044.012.044.011.045.009.044.007.045.006.045.004.045.002.045.001.045v17l-.001.045-.002.045-.004.045-.006.045-.007.045-.009.044-.011.045-.012.044-.013.044-.015.044-.017.043-.018.044-.02.043-.021.043-.023.043-.024.043-.026.043-.027.042-.029.042-.03.042-.032.042-.033.042-.034.041-.036.041-.037.041-.039.041-.04.041-.041.04-.043.04-.044.04-.045.04-.047.039-.048.039-.05.039-.051.039-.052.038-.053.038-.055.038-.055.038-.058.037-.058.037-.06.037-.06.036-.062.036-.064.036-.064.036-.066.035-.067.035-.068.035-.069.035-.07.034-.071.034-.073.033-.074.033-.15.066-.155.064-.16.063-.163.061-.168.06-.172.059-.175.057-.18.056-.183.054-.187.053-.191.051-.194.05-.198.048-.201.046-.205.045-.208.043-.211.041-.214.04-.217.038-.22.036-.223.034-.225.032-.229.031-.231.028-.233.027-.236.024-.239.023-.241.02-.242.019-.246.016-.247.015-.249.012-.251.01-.253.008-.255.005-.256.004-.258.001-.258-.001-.256-.004-.255-.005-.253-.008-.251-.01-.249-.012-.247-.015-.245-.016-.243-.019-.241-.02-.238-.023-.236-.024-.234-.027-.231-.028-.228-.031-.226-.032-.223-.034-.22-.036-.217-.038-.214-.04-.211-.041-.208-.043-.204-.045-.201-.046-.198-.048-.195-.05-.19-.051-.187-.053-.184-.054-.179-.056-.176-.057-.172-.059-.167-.06-.164-.061-.159-.063-.155-.064-.151-.066-.074-.033-.072-.033-.072-.034-.07-.034-.069-.035-.068-.035-.067-.035-.066-.035-.064-.036-.063-.036-.062-.036-.061-.036-.06-.037-.058-.037-.057-.037-.056-.038-.055-.038-.053-.038-.052-.038-.051-.039-.049-.039-.049-.039-.046-.039-.046-.04-.044-.04-.043-.04-.041-.04-.04-.041-.039-.041-.037-.041-.036-.041-.034-.041-.033-.042-.032-.042-.03-.042-.029-.042-.027-.042-.026-.043-.024-.043-.023-.043-.021-.043-.02-.043-.018-.044-.017-.043-.015-.044-.013-.044-.012-.044-.011-.045-.009-.044-.007-.045-.006-.045-.004-.045-.002-.045-.001-.045v-17l.001-.045.002-.045.004-.045.006-.045.007-.045.009-.044.011-.045.012-.044.013-.044.015-.044.017-.043.018-.044.02-.043.021-.043.023-.043.024-.043.026-.043.027-.042.029-.042.03-.042.032-.042.033-.042.034-.041.036-.041.037-.041.039-.041.04-.041.041-.04.043-.04.044-.04.046-.04.046-.039.049-.039.049-.039.051-.039.052-.038.053-.038.055-.038.056-.038.057-.037.058-.037.06-.037.061-.036.062-.036.063-.036.064-.036.066-.035.067-.035.068-.035.069-.035.07-.034.072-.034.072-.033.074-.033.151-.066.155-.064.159-.063.164-.061.167-.06.172-.059.176-.057.179-.056.184-.054.187-.053.19-.051.195-.05.198-.048.201-.046.204-.045.208-.043.211-.041.214-.04.217-.038.22-.036.223-.034.226-.032.228-.031.231-.028.234-.027.236-.024.238-.023.241-.02.243-.019.245-.016.247-.015.249-.012.251-.01.253-.008.255-.005.256-.004.258-.001.258.001zm-9.258 20.499v.01l.001.021.003.021.004.022.005.021.006.022.007.022.009.023.01.022.011.023.012.023.013.023.015.023.016.024.017.023.018.024.019.024.021.024.022.025.023.024.024.025.052.049.056.05.061.051.066.051.07.051.075.051.079.052.084.052.088.052.092.052.097.052.102.051.105.052.11.052.114.051.119.051.123.051.127.05.131.05.135.05.139.048.144.049.147.047.152.047.155.047.16.045.163.045.167.043.171.043.176.041.178.041.183.039.187.039.19.037.194.035.197.035.202.033.204.031.209.03.212.029.216.027.219.025.222.024.226.021.23.02.233.018.236.016.24.015.243.012.246.01.249.008.253.005.256.004.259.001.26-.001.257-.004.254-.005.25-.008.247-.011.244-.012.241-.014.237-.016.233-.018.231-.021.226-.021.224-.024.22-.026.216-.027.212-.028.21-.031.205-.031.202-.034.198-.034.194-.036.191-.037.187-.039.183-.04.179-.04.175-.042.172-.043.168-.044.163-.045.16-.046.155-.046.152-.047.148-.048.143-.049.139-.049.136-.05.131-.05.126-.05.123-.051.118-.052.114-.051.11-.052.106-.052.101-.052.096-.052.092-.052.088-.053.083-.051.079-.052.074-.052.07-.051.065-.051.06-.051.056-.05.051-.05.023-.024.023-.025.021-.024.02-.024.019-.024.018-.024.017-.024.015-.023.014-.024.013-.023.012-.023.01-.023.01-.022.008-.022.006-.022.006-.022.004-.022.004-.021.001-.021.001-.021v-4.127l-.077.055-.08.053-.083.054-.085.053-.087.052-.09.052-.093.051-.095.05-.097.05-.1.049-.102.049-.105.048-.106.047-.109.047-.111.046-.114.045-.115.045-.118.044-.12.043-.122.042-.124.042-.126.041-.128.04-.13.04-.132.038-.134.038-.135.037-.138.037-.139.035-.142.035-.143.034-.144.033-.147.032-.148.031-.15.03-.151.03-.153.029-.154.027-.156.027-.158.026-.159.025-.161.024-.162.023-.163.022-.165.021-.166.02-.167.019-.169.018-.169.017-.171.016-.173.015-.173.014-.175.013-.175.012-.177.011-.178.01-.179.008-.179.008-.181.006-.182.005-.182.004-.184.003-.184.002h-.37l-.184-.002-.184-.003-.182-.004-.182-.005-.181-.006-.179-.008-.179-.008-.178-.01-.176-.011-.176-.012-.175-.013-.173-.014-.172-.015-.171-.016-.17-.017-.169-.018-.167-.019-.166-.02-.165-.021-.163-.022-.162-.023-.161-.024-.159-.025-.157-.026-.156-.027-.155-.027-.153-.029-.151-.03-.15-.03-.148-.031-.146-.032-.145-.033-.143-.034-.141-.035-.14-.035-.137-.037-.136-.037-.134-.038-.132-.038-.13-.04-.128-.04-.126-.041-.124-.042-.122-.042-.12-.044-.117-.043-.116-.045-.113-.045-.112-.046-.109-.047-.106-.047-.105-.048-.102-.049-.1-.049-.097-.05-.095-.05-.093-.052-.09-.051-.087-.052-.085-.053-.083-.054-.08-.054-.077-.054v4.127zm0-5.654v.011l.001.021.003.021.004.021.005.022.006.022.007.022.009.022.01.022.011.023.012.023.013.023.015.024.016.023.017.024.018.024.019.024.021.024.022.024.023.025.024.024.052.05.056.05.061.05.066.051.07.051.075.052.079.051.084.052.088.052.092.052.097.052.102.052.105.052.11.051.114.051.119.052.123.05.127.051.131.05.135.049.139.049.144.048.147.048.152.047.155.046.16.045.163.045.167.044.171.042.176.042.178.04.183.04.187.038.19.037.194.036.197.034.202.033.204.032.209.03.212.028.216.027.219.025.222.024.226.022.23.02.233.018.236.016.24.014.243.012.246.01.249.008.253.006.256.003.259.001.26-.001.257-.003.254-.006.25-.008.247-.01.244-.012.241-.015.237-.016.233-.018.231-.02.226-.022.224-.024.22-.025.216-.027.212-.029.21-.03.205-.032.202-.033.198-.035.194-.036.191-.037.187-.039.183-.039.179-.041.175-.042.172-.043.168-.044.163-.045.16-.045.155-.047.152-.047.148-.048.143-.048.139-.05.136-.049.131-.05.126-.051.123-.051.118-.051.114-.052.11-.052.106-.052.101-.052.096-.052.092-.052.088-.052.083-.052.079-.052.074-.051.07-.052.065-.051.06-.05.056-.051.051-.049.023-.025.023-.024.021-.025.02-.024.019-.024.018-.024.017-.024.015-.023.014-.023.013-.024.012-.022.01-.023.01-.023.008-.022.006-.022.006-.022.004-.021.004-.022.001-.021.001-.021v-4.139l-.077.054-.08.054-.083.054-.085.052-.087.053-.09.051-.093.051-.095.051-.097.05-.1.049-.102.049-.105.048-.106.047-.109.047-.111.046-.114.045-.115.044-.118.044-.12.044-.122.042-.124.042-.126.041-.128.04-.13.039-.132.039-.134.038-.135.037-.138.036-.139.036-.142.035-.143.033-.144.033-.147.033-.148.031-.15.03-.151.03-.153.028-.154.028-.156.027-.158.026-.159.025-.161.024-.162.023-.163.022-.165.021-.166.02-.167.019-.169.018-.169.017-.171.016-.173.015-.173.014-.175.013-.175.012-.177.011-.178.009-.179.009-.179.007-.181.007-.182.005-.182.004-.184.003-.184.002h-.37l-.184-.002-.184-.003-.182-.004-.182-.005-.181-.007-.179-.007-.179-.009-.178-.009-.176-.011-.176-.012-.175-.013-.173-.014-.172-.015-.171-.016-.17-.017-.169-.018-.167-.019-.166-.02-.165-.021-.163-.022-.162-.023-.161-.024-.159-.025-.157-.026-.156-.027-.155-.028-.153-.028-.151-.03-.15-.03-.148-.031-.146-.033-.145-.033-.143-.033-.141-.035-.14-.036-.137-.036-.136-.037-.134-.038-.132-.039-.13-.039-.128-.04-.126-.041-.124-.042-.122-.043-.12-.043-.117-.044-.116-.044-.113-.046-.112-.046-.109-.046-.106-.047-.105-.048-.102-.049-.1-.049-.097-.05-.095-.051-.093-.051-.09-.051-.087-.053-.085-.052-.083-.054-.08-.054-.077-.054v4.139zm0-5.666v.011l.001.02.003.022.004.021.005.022.006.021.007.022.009.023.01.022.011.023.012.023.013.023.015.023.016.024.017.024.018.023.019.024.021.025.022.024.023.024.024.025.052.05.056.05.061.05.066.051.07.051.075.052.079.051.084.052.088.052.092.052.097.052.102.052.105.051.11.052.114.051.119.051.123.051.127.05.131.05.135.05.139.049.144.048.147.048.152.047.155.046.16.045.163.045.167.043.171.043.176.042.178.04.183.04.187.038.19.037.194.036.197.034.202.033.204.032.209.03.212.028.216.027.219.025.222.024.226.021.23.02.233.018.236.017.24.014.243.012.246.01.249.008.253.006.256.003.259.001.26-.001.257-.003.254-.006.25-.008.247-.01.244-.013.241-.014.237-.016.233-.018.231-.02.226-.022.224-.024.22-.025.216-.027.212-.029.21-.03.205-.032.202-.033.198-.035.194-.036.191-.037.187-.039.183-.039.179-.041.175-.042.172-.043.168-.044.163-.045.16-.045.155-.047.152-.047.148-.048.143-.049.139-.049.136-.049.131-.051.126-.05.123-.051.118-.052.114-.051.11-.052.106-.052.101-.052.096-.052.092-.052.088-.052.083-.052.079-.052.074-.052.07-.051.065-.051.06-.051.056-.05.051-.049.023-.025.023-.025.021-.024.02-.024.019-.024.018-.024.017-.024.015-.023.014-.024.013-.023.012-.023.01-.022.01-.023.008-.022.006-.022.006-.022.004-.022.004-.021.001-.021.001-.021v-4.153l-.077.054-.08.054-.083.053-.085.053-.087.053-.09.051-.093.051-.095.051-.097.05-.1.049-.102.048-.105.048-.106.048-.109.046-.111.046-.114.046-.115.044-.118.044-.12.043-.122.043-.124.042-.126.041-.128.04-.13.039-.132.039-.134.038-.135.037-.138.036-.139.036-.142.034-.143.034-.144.033-.147.032-.148.032-.15.03-.151.03-.153.028-.154.028-.156.027-.158.026-.159.024-.161.024-.162.023-.163.023-.165.021-.166.02-.167.019-.169.018-.169.017-.171.016-.173.015-.173.014-.175.013-.175.012-.177.01-.178.01-.179.009-.179.007-.181.006-.182.006-.182.004-.184.003-.184.001-.185.001-.185-.001-.184-.001-.184-.003-.182-.004-.182-.006-.181-.006-.179-.007-.179-.009-.178-.01-.176-.01-.176-.012-.175-.013-.173-.014-.172-.015-.171-.016-.17-.017-.169-.018-.167-.019-.166-.02-.165-.021-.163-.023-.162-.023-.161-.024-.159-.024-.157-.026-.156-.027-.155-.028-.153-.028-.151-.03-.15-.03-.148-.032-.146-.032-.145-.033-.143-.034-.141-.034-.14-.036-.137-.036-.136-.037-.134-.038-.132-.039-.13-.039-.128-.041-.126-.041-.124-.041-.122-.043-.12-.043-.117-.044-.116-.044-.113-.046-.112-.046-.109-.046-.106-.048-.105-.048-.102-.048-.1-.05-.097-.049-.095-.051-.093-.051-.09-.052-.087-.052-.085-.053-.083-.053-.08-.054-.077-.054v4.153zm8.74-8.179l-.257.004-.254.005-.25.008-.247.011-.244.012-.241.014-.237.016-.233.018-.231.021-.226.022-.224.023-.22.026-.216.027-.212.028-.21.031-.205.032-.202.033-.198.034-.194.036-.191.038-.187.038-.183.04-.179.041-.175.042-.172.043-.168.043-.163.045-.16.046-.155.046-.152.048-.148.048-.143.048-.139.049-.136.05-.131.05-.126.051-.123.051-.118.051-.114.052-.11.052-.106.052-.101.052-.096.052-.092.052-.088.052-.083.052-.079.052-.074.051-.07.052-.065.051-.06.05-.056.05-.051.05-.023.025-.023.024-.021.024-.02.025-.019.024-.018.024-.017.023-.015.024-.014.023-.013.023-.012.023-.01.023-.01.022-.008.022-.006.023-.006.021-.004.022-.004.021-.001.021-.001.021.001.021.001.021.004.021.004.022.006.021.006.023.008.022.01.022.01.023.012.023.013.023.014.023.015.024.017.023.018.024.019.024.02.025.021.024.023.024.023.025.051.05.056.05.06.05.065.051.07.052.074.051.079.052.083.052.088.052.092.052.096.052.101.052.106.052.11.052.114.052.118.051.123.051.126.051.131.05.136.05.139.049.143.048.148.048.152.048.155.046.16.046.163.045.168.043.172.043.175.042.179.041.183.04.187.038.191.038.194.036.198.034.202.033.205.032.21.031.212.028.216.027.22.026.224.023.226.022.231.021.233.018.237.016.241.014.244.012.247.011.25.008.254.005.257.004.26.001.26-.001.257-.004.254-.005.25-.008.247-.011.244-.012.241-.014.237-.016.233-.018.231-.021.226-.022.224-.023.22-.026.216-.027.212-.028.21-.031.205-.032.202-.033.198-.034.194-.036.191-.038.187-.038.183-.04.179-.041.175-.042.172-.043.168-.043.163-.045.16-.046.155-.046.152-.048.148-.048.143-.048.139-.049.136-.05.131-.05.126-.051.123-.051.118-.051.114-.052.11-.052.106-.052.101-.052.096-.052.092-.052.088-.052.083-.052.079-.052.074-.051.07-.052.065-.051.06-.05.056-.05.051-.05.023-.025.023-.024.021-.024.02-.025.019-.024.018-.024.017-.023.015-.024.014-.023.013-.023.012-.023.01-.023.01-.022.008-.022.006-.023.006-.021.004-.022.004-.021.001-.021.001-.021-.001-.021-.001-.021-.004-.021-.004-.022-.006-.021-.006-.023-.008-.022-.01-.022-.01-.023-.012-.023-.013-.023-.014-.023-.015-.024-.017-.023-.018-.024-.019-.024-.02-.025-.021-.024-.023-.024-.023-.025-.051-.05-.056-.05-.06-.05-.065-.051-.07-.052-.074-.051-.079-.052-.083-.052-.088-.052-.092-.052-.096-.052-.101-.052-.106-.052-.11-.052-.114-.052-.118-.051-.123-.051-.126-.051-.131-.05-.136-.05-.139-.049-.143-.048-.148-.048-.152-.048-.155-.046-.16-.046-.163-.045-.168-.043-.172-.043-.175-.042-.179-.041-.183-.04-.187-.038-.191-.038-.194-.036-.198-.034-.202-.033-.205-.032-.21-.031-.212-.028-.216-.027-.22-.026-.224-.023-.226-.022-.231-.021-.233-.018-.237-.016-.241-.014-.244-.012-.247-.011-.25-.008-.254-.005-.257-.004-.26-.001-.26.001z"></path></symbol></defs><defs><symbol id="mermaid-1777904931754-clock" width="24" height="24"><path transform="scale(.5)" d="M12 2c5.514 0 10 4.486 10 10s-4.486 10-10 10-10-4.486-10-10 4.486-10 10-10zm0-2c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm5.848 12.459c.202.038.202.333.001.372-1.907.361-6.045 1.111-6.547 1.111-.719 0-1.301-.582-1.301-1.301 0-.512.77-5.447 1.125-7.445.034-.192.312-.181.343.014l.985 6.238 5.394 1.011z"></path></symbol></defs><defs><marker id="mermaid-1777904931754-arrowhead" refX="7.9" refY="5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto-start-reverse"><path d="M -1 0 L 10 5 L 0 10 z"></path></marker></defs><defs><marker id="mermaid-1777904931754-crosshead" markerWidth="15" markerHeight="8" orient="auto" refX="4" refY="4.5"><path fill="none" stroke="#000000" stroke-width="1pt" d="M 1,2 L 6,7 M 6,2 L 1,7" style="stroke-dasharray: 0, 0;"></path></marker></defs><defs><marker id="mermaid-1777904931754-filled-head" refX="15.5" refY="7" markerWidth="20" markerHeight="28" orient="auto"><path d="M 18,7 L9,13 L14,7 L9,1 Z"></path></marker></defs><defs><marker id="mermaid-1777904931754-sequencenumber" refX="15" refY="15" markerWidth="60" markerHeight="40" orient="auto"><circle cx="15" cy="15" r="6"></circle></marker></defs><defs><marker id="mermaid-1777904931754-solidTopArrowHead" refX="7.9" refY="7.25" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto-start-reverse"><path d="M 0 0 L 10 8 L 0 8 z"></path></marker></defs><defs><marker id="mermaid-1777904931754-solidBottomArrowHead" refX="7.9" refY="0.75" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto-start-reverse"><path d="M 0 0 L 10 0 L 0 8 z"></path></marker></defs><defs><marker id="mermaid-1777904931754-stickTopArrowHead" refX="7.5" refY="7" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto-start-reverse"><path d="M 0 0 L 7 7" stroke="black" stroke-width="1.5" fill="none"></path></marker></defs><defs><marker id="mermaid-1777904931754-stickBottomArrowHead" refX="7.5" refY="0" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto-start-reverse"><path d="M 0 7 L 7 0" stroke="black" stroke-width="1.5" fill="none"></path></marker></defs><text x="186" y="80" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" class="messageText" dy="1em" style="font-size: 16px; font-weight: 400;">findAll(handle, text, cb)</text><line x1="76" y1="111" x2="295" y2="111" class="messageLine0" data-et="message" data-id="i0" data-from="J" data-to="R" stroke-width="2" stroke="none" marker-end="url(#mermaid-1777904931754-arrowhead)" style="fill: none;"></line><text x="189" y="146" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" class="messageText" dy="1em" style="font-size: 16px; font-weight: 400;">cb(0, 5)   — match 1</text><line x1="298" y1="177" x2="79" y2="177" class="messageLine1" data-et="message" data-id="i2" data-from="R" data-to="J" stroke-width="2" stroke="none" marker-end="url(#mermaid-1777904931754-arrowhead)" style="stroke-dasharray: 3, 3; fill: none;"></line><text x="186" y="192" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" class="messageText" dy="1em" style="font-size: 16px; font-weight: 400;">true (continue)</text><line x1="76" y1="223" x2="295" y2="223" class="messageLine1" data-et="message" data-id="i3" data-from="J" data-to="R" stroke-width="2" stroke="none" marker-end="url(#mermaid-1777904931754-arrowhead)" style="stroke-dasharray: 3, 3; fill: none;"></line><text x="189" y="268" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" class="messageText" dy="1em" style="font-size: 16px; font-weight: 400;">cb(7, 12)  — match 2</text><line x1="298" y1="299" x2="79" y2="299" class="messageLine1" data-et="message" data-id="i6" data-from="R" data-to="J" stroke-width="2" stroke="none" marker-end="url(#mermaid-1777904931754-arrowhead)" style="stroke-dasharray: 3, 3; fill: none;"></line><text x="186" y="314" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" class="messageText" dy="1em" style="font-size: 16px; font-weight: 400;">true (continue)</text><line x1="76" y1="345" x2="295" y2="345" class="messageLine1" data-et="message" data-id="i7" data-from="J" data-to="R" stroke-width="2" stroke="none" marker-end="url(#mermaid-1777904931754-arrowhead)" style="stroke-dasharray: 3, 3; fill: none;"></line><text x="189" y="390" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" class="messageText" dy="1em" style="font-size: 16px; font-weight: 400;">cb(14, 19) — match 3</text><line x1="298" y1="421" x2="79" y2="421" class="messageLine1" data-et="message" data-id="i10" data-from="R" data-to="J" stroke-width="2" stroke="none" marker-end="url(#mermaid-1777904931754-arrowhead)" style="stroke-dasharray: 3, 3; fill: none;"></line><text x="186" y="436" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" class="messageText" dy="1em" style="font-size: 16px; font-weight: 400;">false (stop early)</text><line x1="76" y1="467" x2="295" y2="467" class="messageLine1" data-et="message" data-id="i11" data-from="J" data-to="R" stroke-width="2" stroke="none" marker-end="url(#mermaid-1777904931754-arrowhead)" style="stroke-dasharray: 3, 3; fill: none;"></line><text x="189" y="492" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" class="messageText" dy="1em" style="font-size: 16px; font-weight: 400;">(returns)</text><line x1="298" y1="523" x2="79" y2="523" class="messageLine0" data-et="message" data-id="i13" data-from="R" data-to="J" stroke-width="2" stroke="none" marker-end="url(#mermaid-1777904931754-arrowhead)" style="fill: none;"></line></svg></div>
+  <span class="slide-num">21 / 36</span>
+</section>
+
+<section>
+  <h2>Callbacks: the Java contract</h2>
+  <pre><code class="language-java">// The interface Rust will call back into
+interface MatchVisitor {
+    // return true to continue, false to stop early
+    boolean onMatch(int start, int end);
+}
+
+// Usage
+regex.findAll(haystack, (start, end) -> {
+    System.out.println("match at " + start + ".." + end);
+    return true;  // keep going
+});</code></pre>
+  <span class="slide-num">22 / 36</span>
+</section>
+
+<section>
+  <h2>Callbacks: <span class="tag-jni">JNI</span></h2>
+  <pre><code class="language-rust" data-line-numbers="|5|10-17">#[no_mangle]
+pub extern "system" fn Java_..._forEachMatch(
+    mut env: JNIEnv, _class: JClass,
+    ptr: jlong, haystack: JString,
+    visitor: JObject,   // the MatchVisitor instance
+) {
+    let regex = unsafe { &*(ptr as *const Regex) };
+    let haystack_str: String = env.get_string(&haystack).unwrap().into();
+    for m in regex.find_iter(&haystack_str[..]) {
+        let keep_going = env.call_method(
+            &visitor,          // Java object
+            "onMatch",         // method name (string!)
+            "(II)Z",           // JNI type signature (string!)
+            &[JValue::from(m.start() as jint),
+              JValue::from(m.end() as jint)]
+        ).expect("onMatch call failed")
+         .z().expect("must return boolean");
+        if !keep_going { break; }
+    }
+}</code></pre>
+  <span class="slide-num">23 / 36</span>
+</section>
+
+<section>
+  <h2>Callbacks: <span class="tag-panama">Panama</span></h2>
+  <pre><code class="language-rust" data-line-numbers="|1-5|11|13-19">// Plain C function pointer — no Java types
+pub type MatchCallback =
+  unsafe extern "C" fn(
+    start: i32, end: i32
+  ) -> bool;
+
+#[no_mangle]
+pub extern "C" fn for_each_match(
+    handle: *mut RegexHandle,
+    hay_ptr: *const u8, hay_len: usize,
+    callback: MatchCallback, // <- the function pointer
+) {
+    let hay = bytes_to_str(hay_ptr, hay_len);
+    for m in unsafe { &*handle }.regex.find_iter(hay) {
+        // indexes are not correct (UTF-8 vs UTF-16)
+        if !callback(m.start() as i32, m.end() as i32) {
+            break;
+        }
+    }
+}</code></pre>
+  <div class="callout" style="font-size:0.75em;">
+    A plain C function pointer. No mention of Java. This library could be called from Python, Go, or Java — it doesn't care.
+  </div>
+  <span class="slide-num">24 / 36</span>
+</section>
+
+<section>
+  <h2>Callbacks: <span class="tag-panama">Panama</span></h2>
+  <pre><code class="language-java" data-line-numbers="|1-5|7-12|14-21">// The Java method that will be called back
+boolean onMatch(int start, int end) {
+    System.out.println("match at " + start + ".." + end);
+    return true;
+}
+
+// Wire it into a native function pointer — done once at setup
+static final MethodHandle MATCH_UPCALL_BRIDGE =
+    MethodHandles.lookup().findVirtual(
+        PanamaRsRegex.class,
+        "onMatch",
+        MethodType.methodType(boolean.class, int.class, int.class));
+
+// The downcall handle for for_each_match
+static final MethodHandle FOR_EACH_MATCH = LINKER.downcallHandle(
+    LIB.find("for_each_match").orElseThrow(),
+    FunctionDescriptor.ofVoid(
+        ADDRESS,             // handle
+        ADDRESS, JAVA_LONG,  // haystack ptr + len
+        ADDRESS              // callback function pointer
+    ));</code></pre>
+  <span class="slide-num">25 / 36</span>
+</section>
+
+<section>
+  <h2>Callbacks: <span class="tag-panama">Panama</span></h2>
+  <pre><code class="language-java" data-line-numbers="|3-7,10">public void forEachMatch(String haystack) {
+    try (Arena arena = Arena.ofConfined()) {
+        MemorySegment stub = LINKER.upcallStub(
+            MATCH_UPCALL_BRIDGE,
+            FunctionDescriptor.of(
+                JAVA_BOOLEAN, JAVA_INT, JAVA_INT),
+            arena);
+        byte[] utf8 = haystack.getBytes(UTF_8);
+        MemorySegment cHay = arena.allocateFrom(JAVA_BYTE, utf8);
+        FOR_EACH_MATCH.invoke(handle, cHay, (long) utf8.length, stub);
+    }
+}</code></pre>
+  <span class="slide-num">26 / 36</span>
+</section>
+
+<section>
+  <div class="section-divider">🎯</div>
+  <h1 style="color:var(--accent)">Wrapping Up</h1>
+  <span class="slide-num">27 / 36</span>
+</section>
+
+<section>
+  <h2>What we built today</h2>
+  <pre><code class="language-text">  Semantic case                       JNI    Panama
+  ────────────────────────────────────────────────
+  Simple call with primitives           ✓       ✓
+  Simple call with strings              ✓       ✓
+  Return a native handle (pattern ref)  ✓       ✓
+  Return an object / struct             ✓       ✓
+  Callback / upcall from native         ✓       ✓</code></pre>
+  <span class="slide-num">28 / 36</span>
+</section>
+
+<section>
+  <h2>When should you reach for native?</h2>
+  <table>
+    <thead>
+      <tr><th>Reason</th><th>Worth it?</th><th>Notes</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Ecosystem</strong></td>
+        <td style="color:#2ecc71;">✓ Yes</td>
+        <td style="font-size:0.8em;">Now it is easier to use existing libraries</td>
+      </tr>
+      <tr>
+        <td><strong>Ergonomics</strong></td>
+        <td style="color:#2ecc71;">✓ Yes</td>
+        <td style="font-size:0.8em;">Genuine JVM blind spots</td>
+      </tr>
+      <tr>
+        <td><strong>Performance</strong></td>
+        <td style="color:#e67e22;">⚠ Verify first</td>
+        <td style="font-size:0.8em;">JIT/GC are good. Measure</td>
+      </tr>
+    </tbody>
+  </table>
+  <span class="slide-num">29 / 36</span>
+</section>
+
+<section>
+  <h2>Performance tips</h2>
+  <ul style="font-size:0.95em; line-height:1.8;">
+    <li class="fragment">Each call is expensive.</li>
+       <ul class="fragment" style="font-size:0.95em; line-height:1.8;">
+         <li>JNI slower than Panama</li>
+       </ul>
+    <li class="fragment">One broad &gt; many narrow.</li>
+    <li class="fragment">Shared memory &gt; copies.</li>
+    <li class="fragment">Do not use Java Strings.</li>
+    <li class="fragment">Use async-profiler — not JFR.</li>
+  </ul>
+  <span class="slide-num">30 / 36</span>
+</section>
+
+<section>
+  <h2>Toolbox</h2>
+  <ul style="font-size:0.92em; line-height:1.8;">
+    <li><strong style="color:var(--accent)">Build</strong> — <code>rust-maven-plugin</code> bundles native libs inside the jar.</li>
+    <li class="fragment"><strong style="color:var(--accent)">Debugging</strong> — Two debuggers, two windows.</li>
+    <li class="fragment"><strong style="color:var(--accent)">Logging</strong> — Rust <code>log</code> / <code>tracing</code> don't feed SLF4J.</li>
+    <li class="fragment"><strong style="color:var(--accent)">IDEs &amp; AI</strong> — No cross-boundary refactoring. AI shines for translation.</li>
+    <li class="fragment"><strong style="color:var(--accent)">Two heaps, one process</strong> — GC knows nothing about Rust allocations.</li>
+  </ul>
+  <span class="slide-num">31 / 36</span>
+</section>
+
+<section>
+  <div class="section-divider">⚠️</div>
+  <h1 style="color:var(--accent)">One last critical part</h1>
+  <span class="slide-num">32 / 36</span>
+</section>
+
+<section class="danger-slide">
+  <h2 style="color:#e74c3c;">⚠ A panic will kill the JVM</h2>
+  <pre><code class="language-rust">let regex = Regex::new(&pattern).expect("Invalid regex");
+//                               ^^^^^^^ panic on invalid input!</code></pre>
+  <div class="callout danger-callout" style="margin-top:1em;">
+    A panic across <code>extern "C"</code> is <strong>undefined behavior</strong>.<br>
+    No stack trace. No exception. The JVM just dies.
+  </div>
+  <span class="slide-num">33 / 36</span>
+</section>
+
+<section>
+  <h2>Catch panics at the boundary</h2>
+  <pre><code class="language-rust" data-line-numbers="|5-7|9-12">// Rust: catch the panic, signal failure with a null pointer
+pub extern "C" fn create(
+    pattern_ptr: *const u8, pattern_len: usize,
+) -> *mut RegexHandle {
+    let result = std::panic::catch_unwind(|| {
+        let pattern = bytes_to_str(pattern_ptr, pattern_len)?;
+        Ok(Regex::new(pattern)?)
+    });
+    match result {
+        Ok(Ok(regex)) => Box::into_raw(Box::new(RegexHandle { regex })),
+        _ => std::ptr::null_mut(), // in case of error
+    }
+}</code></pre>
+  <div class="callout fragment" style="font-size:0.75em; margin-top:0.8em;">
+    <strong style="color:var(--accent);">Alternative to returning <code>null</code>?</strong>
+    &nbsp; Why not <em>throw an exception</em>?
+  </div>
+  <span class="slide-num">34 / 36</span>
+</section>
+
+<section>
+  <h2>Resources</h2>
+  <ul style="font-size:0.85em; line-height:1.9;">
+    <li><code>github.com/gortiz/jrs-regex</code> — full project, benchmarks, flamegraphs</li>
+    <li>JEP 454 — Foreign Function &amp; Memory API</li>
+    <li><code>docs.rs/regex</code> — Rust regex crate</li>
+    <li><code>github.com/mozilla/cbindgen</code></li>
+    <li><code>github.com/openjdk/jextract</code></li>
+    <li>async-profiler, JMH</li>
+  </ul>
+  <span class="slide-num">35 / 36</span>
+</section>
+
+<section>
+  <h1>Thank you</h1>
+  <p style="font-size:1.5em; margin-top:2em;">Questions?</p>
+  <p style="font-size:0.7em; color:#666; margin-top:2em;">Gonzalo Ortiz · Devoxx UK</p>
+  <span class="slide-num">36 / 36</span>
+</section>
+
+</div></div>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/highlight/highlight.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/notes/notes.js"></script>
+<script>
+  mermaid.initialize({
+    startOnLoad: false,
+    theme: 'base',
+    themeVariables: {
+      darkMode: true,
+      background: '#1a1a1a',
+      fontFamily: 'Source Sans Pro, Segoe UI, sans-serif',
+      fontSize: '18px',
+      // Sequence-diagram — actors as bright cards, notes as amber paper
+      actorBkg: '#3d4a5e',
+      actorBorder: '#7aa6d6',
+      actorTextColor: '#ffffff',
+      // Subdued lifeline so it doesn't look like strikethrough through notes
+      actorLineColor: '#3a3a3a',
+      signalColor: '#e0e0e0',
+      signalTextColor: '#e0e0e0',
+      labelBoxBkgColor: '#3d4a5e',
+      labelBoxBorderColor: '#7aa6d6',
+      labelTextColor: '#ffffff',
+      loopTextColor: '#e0e0e0',
+      noteBkgColor: '#4a3a1f',
+      noteTextColor: '#ffe9b4',
+      noteBorderColor: '#e6a020',
+      activationBkgColor: '#5a5a5a',
+      activationBorderColor: '#aaa',
+      sequenceNumberColor: '#1a1a1a',
+      // Flowchart
+      primaryColor: '#3d4a5e',
+      primaryTextColor: '#ffffff',
+      primaryBorderColor: '#7aa6d6',
+      secondaryColor: '#4a3a1f',
+      tertiaryColor: '#2d2d2d',
+      lineColor: '#e6a020',
+      nodeBkg: '#3d4a5e',
+      nodeBorder: '#7aa6d6',
+      mainBkg: '#3d4a5e',
+      edgeLabelBackground: '#1a1a1a',
+      clusterBkg: '#222',
+      clusterBorder: '#444',
+      titleColor: '#e6a020',
+    }
+  });
+
+  Reveal.initialize({
+    hash: true,
+    center: false,
+    slideNumber: false,
+    transition: 'slide',
+    transitionSpeed: 'fast',
+    plugins: [ RevealHighlight, RevealNotes ],
+    highlight: {
+      beforeHighlight: (hljs) => {
+        hljs.registerLanguage('text', () => ({ name: 'text', contains: [] }));
+      }
+    }
+  });
+
+  // After mermaid renders, force note groups to paint above actor lifelines.
+  // Works around a z-order quirk where the lifeline appears as a strikethrough
+  // through the centre of opaque note rectangles in some Chrome builds.
+  function reorderMermaidNotes() {
+    document.querySelectorAll('.mermaid svg').forEach((svg) => {
+      svg.querySelectorAll('g[data-et="note"]').forEach((note) => {
+        // Re-append moves the element to the end of its parent's child list,
+        // which in SVG paints it last (on top). Inserting before the first
+        // message keeps notes below messages but above lifelines.
+        const parent = note.parentElement;
+        const firstMessage = parent.querySelector('line.messageLine0, line.messageLine1, text.messageText');
+        if (firstMessage) parent.insertBefore(note, firstMessage);
+        else parent.appendChild(note);
+      });
+    });
+  }
+
+  // Render Mermaid diagrams after Reveal is ready
+  Reveal.on('ready', () => mermaid.run().then(reorderMermaidNotes));
+  Reveal.on('slidechanged', () => mermaid.run().then(reorderMermaidNotes));
+</script>
+</body>
+</html>

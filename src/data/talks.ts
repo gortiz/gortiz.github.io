@@ -34,6 +34,8 @@ export const talks: Talk[] = [
     links: [
       { label: 'Slides', href: '/talks/panama-rust/' },
       { label: 'PDF', href: '/talks/panama-rust/panama-rust.pdf' },
+      { label: 'Extended slides', href: '/talks/panama-rust/extended/' },
+      { label: 'Extended PDF', href: '/talks/panama-rust/extended/panama-rust-extended.pdf' },
     ],
   },
 ];
